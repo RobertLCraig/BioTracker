@@ -6,7 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 //use Inertia\Inertia;
 use App\Models\Job;
-
+use App\Livewire\Counter;
 
 
 
@@ -20,8 +20,12 @@ use App\Models\Job;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::get('/counter', Counter::class);
 
 Route::get('/', function () {
+//    $jobs = Job::all();
+//    dd($jobs[1]->title);
+
     return view('home',
         [
             "title" => "Home",
@@ -48,6 +52,7 @@ Route::get('/jobs/{id}', function ($id)  {
     $job = Job::find($id);
     return view('job', ['job' => $job]);
 });
+
 
 // Example tests
 
