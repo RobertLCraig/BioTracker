@@ -4,11 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>About</title>
-
-
+    <title>Contact</title>
 </head>
 <body>
-<h1> About </h1>
+<nav>
+    <a href="/"> Home</a>
+    <a href="/about"> About</a>
+    <a href="/contact"> Contact</a>
+</nav>
+
+
+{{--Short Form--}}
+{{ $slot }}
+
+{{--Long form--}}
+{{--<?php echo $slot ?>--}}
+
 </body>
 </html>
