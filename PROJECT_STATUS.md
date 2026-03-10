@@ -1,8 +1,8 @@
 # BioTracker — Project Status
 
-Last updated: 2026-03-10T18:30:00Z
-Current phase: Phase 4 — Analytics & Reports (COMPLETE — see Phase 5 next)
-Current step: 5.1
+Last updated: 2026-03-10T20:30:00Z
+Current phase: Phase 5 — Integrations (COMPLETE)
+Current step: ALL PHASES COMPLETE
 
 ## Overview
 
@@ -86,12 +86,14 @@ for future mobile app integration.
 
 ## Phase 5 — Integrations
 
-- [ ] 5.1 Connected services — migration + model (encrypted tokens)
-- [ ] 5.2 Fitbit integration — `FitbitService`, OAuth + sync
-- [ ] 5.3 `IntegrationController` — connect, callback, sync, disconnect
-- [ ] 5.4 `SyncFitbitDataJob` — queued sync job
-- [ ] 5.5 Batch import endpoints — mobile bulk-push for all log types
-- [ ] 5.6 Apple Health XML import — `AppleHealthImportService`
+- [x] 5.1 Connected services — migration + model (encrypted tokens)
+- [x] 5.2 Fitbit integration — `FitbitService`, OAuth + sync
+- [x] 5.3 `IntegrationController` — connect, callback, sync, disconnect
+- [x] 5.4 `SyncFitbitDataJob` — queued sync job, scheduled every 4h per connected user
+- [x] 5.5 Batch import endpoints — `BatchImportController`, all 5 log types, `client_id` dedup, migration for `client_id` columns
+- [x] 5.6 Apple Health XML import — `AppleHealthImportService`, `ProcessAppleHealthImportJob`, `ImportController`
+
+**Phase 5 complete.**
 
 ---
 
@@ -112,6 +114,7 @@ for future mobile app integration.
 
 ## File Inventory (current)
 
+### Phase 1 — Foundation
 | Path | Description |
 |------|-------------|
 | `app/Models/User.php` | User model with TOTP + Sanctum |
@@ -125,9 +128,59 @@ for future mobile app integration.
 | `app/Http/Middleware/SessionTimeout.php` | 15-min session timeout |
 | `app/Http/Middleware/EnsureTotpVerified.php` | TOTP gate middleware |
 | `config/biotracker.php` | App-specific config (points, streaks, security) |
-| `database/migrations/0001_01_01_000000_create_users_table.php` | Users + TOTP columns |
-| `database/migrations/0001_01_01_000003_create_audit_logs_table.php` | Audit log table |
-| `database/migrations/2026_03_10_115233_create_media_table.php` | Spatie media table |
+| `app/Enums/` | 8 PHP 8.1 backed enums (ExcretionType, VitalType, etc.) |
+
+### Phase 2 — Core Logging
+| Path | Description |
+|------|-------------|
+| `app/Models/ActivityLog.php` | Activity log with media + encrypted notes |
+| `app/Models/ExcretionLog.php` | Excretion log with enums + photos |
+| `app/Models/Medication.php` | Medication with encrypted fields |
+| `app/Models/MedicationLog.php` | Medication dose log |
+| `app/Models/SymptomLog.php` | Symptom log with encrypted fields |
+| `app/Models/VitalLog.php` | Vital signs log |
+| `app/Http/Controllers/Api/V1/ActivityLogController.php` | CRUD + photo upload |
+| `app/Http/Controllers/Api/V1/ExcretionLogController.php` | CRUD + photo upload |
+| `app/Http/Controllers/Api/V1/MedicationController.php` | Medication CRUD |
+| `app/Http/Controllers/Api/V1/MedicationLogController.php` | Dose log CRUD |
+| `app/Http/Controllers/Api/V1/SymptomLogController.php` | Symptom CRUD + photos |
+| `app/Http/Controllers/Api/V1/VitalLogController.php` | Vital CRUD + filters |
+
+### Phase 3 — Gamification
+| Path | Description |
+|------|-------------|
+| `app/Services/Scoring/ScoringService.php` | Award points, photo bonus, streak bonus |
+| `app/Services/Streak/StreakService.php` | Record activity, check milestones |
+| `app/Services/Scoring/AchievementService.php` | Check + unlock achievements |
+| `app/Observers/` | 5 log observers wiring scoring/streak/achievement |
+| `app/Http/Controllers/Api/V1/PointController.php` | Points balance + history |
+| `app/Http/Controllers/Api/V1/StreakController.php` | Current streak |
+| `app/Http/Controllers/Api/V1/AchievementController.php` | All achievements + unlock status |
+| `app/Http/Controllers/Api/V1/UserTaskController.php` | Task CRUD + complete |
+
+### Phase 4 — Analytics & Reports
+| Path | Description |
+|------|-------------|
+| `app/Services/Analytics/AnalyticsService.php` | Dashboard, trends, daily summary regeneration |
+| `app/Services/Reports/ReportExportService.php` | PDF + CSV report generation |
+| `app/Http/Controllers/Api/V1/AnalyticsController.php` | Dashboard + trends endpoints |
+| `app/Http/Controllers/Api/V1/ReportController.php` | Export endpoint (audit-logged) |
+| `app/Jobs/GenerateDailySummaryJob.php` | Nightly batch summary job |
+| `resources/views/reports/medical-report.blade.php` | DomPDF Blade template |
+
+### Phase 5 — Integrations
+| Path | Description |
+|------|-------------|
+| `app/Models/ConnectedService.php` | OAuth token store (encrypted) |
+| `app/Services/Integrations/FitbitService.php` | Fitbit OAuth2 + data sync |
+| `app/Services/Integrations/AppleHealthImportService.php` | Apple Health XML parser |
+| `app/Http/Controllers/Api/V1/IntegrationController.php` | Connect / callback / sync / disconnect |
+| `app/Http/Controllers/Api/V1/BatchImportController.php` | Bulk import for all 5 log types |
+| `app/Http/Controllers/Api/V1/ImportController.php` | Apple Health file upload endpoint |
+| `app/Jobs/SyncFitbitDataJob.php` | Queued Fitbit sync per user |
+| `app/Jobs/ProcessAppleHealthImportJob.php` | Queued Apple Health XML processing |
+| `routes/api.php` | All 70+ API routes |
+| `routes/console.php` | Scheduled jobs (nightly summary + 4h Fitbit sync) |
 
 ---
 

@@ -5,7 +5,10 @@ use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\ActivityTypeController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BatchImportController;
 use App\Http\Controllers\Api\V1\ExcretionLogController;
+use App\Http\Controllers\Api\V1\ImportController;
+use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\MedicationLogController;
 use App\Http\Controllers\Api\V1\PointController;
@@ -53,7 +56,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('symptom-logs',    SymptomLogController::class);
         Route::apiResource('vital-logs',      VitalLogController::class);
 
-        // ── Phase 3: Gamification ────────────────────────────────────────────────
+        // ── Phase 3: Gamification ─────────────────────────────────────────────
         Route::get('/points',                 [PointController::class, 'index']);
         Route::get('/points/history',         [PointController::class, 'history']);
         Route::get('/streaks',                [StreakController::class, 'show']);
@@ -61,16 +64,26 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('tasks',           UserTaskController::class);
         Route::post('/tasks/{task}/complete', [UserTaskController::class, 'complete']);
 
-        // ── Phase 4: Analytics ───────────────────────────────────────────────────
+        // ── Phase 4: Analytics ────────────────────────────────────────────────
         Route::get('/analytics/dashboard',   [AnalyticsController::class, 'dashboard']);
         Route::get('/analytics/trends',      [AnalyticsController::class, 'trends']);
         Route::post('/reports/export',       [ReportController::class, 'export']);
 
-        // ── Phase 5: Integrations (uncomment when ready) ─────────────────────
-        // Route::get('/integrations',                              [IntegrationController::class, 'index']);
-        // Route::get('/integrations/{provider}/connect',           [IntegrationController::class, 'redirect']);
-        // Route::get('/integrations/{provider}/callback',          [IntegrationController::class, 'callback']);
-        // Route::post('/integrations/{provider}/sync',             [IntegrationController::class, 'sync']);
-        // Route::delete('/integrations/{provider}',                [IntegrationController::class, 'disconnect']);
+        // ── Phase 5: Integrations ─────────────────────────────────────────────
+        Route::get('/integrations',                       [IntegrationController::class, 'index']);
+        Route::get('/integrations/{provider}/connect',    [IntegrationController::class, 'redirect']);
+        Route::get('/integrations/{provider}/callback',   [IntegrationController::class, 'callback']);
+        Route::post('/integrations/{provider}/sync',      [IntegrationController::class, 'sync']);
+        Route::delete('/integrations/{provider}',         [IntegrationController::class, 'disconnect']);
+
+        // ── Phase 5: Batch imports (mobile bulk-push) ─────────────────────────
+        Route::post('/activity-logs/batch',   [BatchImportController::class, 'activityLogs']);
+        Route::post('/excretion-logs/batch',  [BatchImportController::class, 'excretionLogs']);
+        Route::post('/medication-logs/batch', [BatchImportController::class, 'medicationLogs']);
+        Route::post('/symptom-logs/batch',    [BatchImportController::class, 'symptomLogs']);
+        Route::post('/vital-logs/batch',      [BatchImportController::class, 'vitalLogs']);
+
+        // ── Phase 5: File imports ─────────────────────────────────────────────
+        Route::post('/imports/apple-health',  [ImportController::class, 'appleHealth']);
     });
 });
