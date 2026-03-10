@@ -17,6 +17,12 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->text('totp_secret')->nullable();       // encrypted
+            $table->boolean('totp_enabled')->default(false);
+            $table->timestamp('totp_confirmed_at')->nullable();
+            $table->json('totp_recovery_codes')->nullable(); // hashed codes
+            $table->timestamp('privacy_consented_at')->nullable();
+            $table->timestamp('terms_accepted_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
