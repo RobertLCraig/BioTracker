@@ -3,11 +3,13 @@
 use App\Http\Controllers\Api\V1\AchievementController;
 use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\ActivityTypeController;
+use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ExcretionLogController;
 use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\MedicationLogController;
 use App\Http\Controllers\Api\V1\PointController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\StreakController;
 use App\Http\Controllers\Api\V1\SymptomLogController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -59,10 +61,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('tasks',           UserTaskController::class);
         Route::post('/tasks/{task}/complete', [UserTaskController::class, 'complete']);
 
-        // ── Phase 4: Analytics (uncomment when ready) ────────────────────────
-        // Route::get('/analytics/dashboard',       [AnalyticsController::class, 'dashboard']);
-        // Route::get('/analytics/trends',          [AnalyticsController::class, 'trends']);
-        // Route::post('/reports/export',           [ReportController::class, 'export']);
+        // ── Phase 4: Analytics ───────────────────────────────────────────────────
+        Route::get('/analytics/dashboard',   [AnalyticsController::class, 'dashboard']);
+        Route::get('/analytics/trends',      [AnalyticsController::class, 'trends']);
+        Route::post('/reports/export',       [ReportController::class, 'export']);
 
         // ── Phase 5: Integrations (uncomment when ready) ─────────────────────
         // Route::get('/integrations',                              [IntegrationController::class, 'index']);

@@ -1,8 +1,8 @@
 # BioTracker — Project Status
 
-Last updated: 2026-03-10T18:00:00Z
-Current phase: Phase 3 — Gamification (COMPLETE — see Phase 4 next)
-Current step: 4.1
+Last updated: 2026-03-10T18:30:00Z
+Current phase: Phase 4 — Analytics & Reports (COMPLETE — see Phase 5 next)
+Current step: 5.1
 
 ## Overview
 
@@ -73,12 +73,14 @@ for future mobile app integration.
 
 ## Phase 4 — Analytics & Reports
 
-- [ ] 4.1 Daily summaries — migration + model
-- [ ] 4.2 `AnalyticsService` — dashboard, trends, regenerate summary
-- [ ] 4.3 `AnalyticsController` — dashboard + trends endpoints
-- [ ] 4.4 `ReportExportService` — PDF + CSV generation via DomPDF
-- [ ] 4.5 `ReportController` — export endpoint
-- [ ] 4.6 `GenerateDailySummaryJob` + scheduled task
+- [x] 4.1 Daily summaries — migration + model
+- [x] 4.2 `AnalyticsService` — dashboard, trends, regenerateDailySummary
+- [x] 4.3 `AnalyticsController` — dashboard + trends endpoints
+- [x] 4.4 `ReportExportService` — PDF + CSV; Blade template `reports/medical-report.blade.php`
+- [x] 4.5 `ReportController` — export endpoint (audit-logged)
+- [x] 4.6 `GenerateDailySummaryJob` + `Schedule::job()->dailyAt('02:00')`
+
+**Phase 4 complete.**
 
 ---
 
