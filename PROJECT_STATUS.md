@@ -1,8 +1,8 @@
 # BioTracker — Project Status
 
-Last updated: 2026-03-10T17:30:00Z
-Current phase: Phase 2 — Core Logging (COMPLETE — see Phase 3 next)
-Current step: 3.1
+Last updated: 2026-03-10T18:00:00Z
+Current phase: Phase 3 — Gamification (COMPLETE — see Phase 4 next)
+Current step: 4.1
 
 ## Overview
 
@@ -57,15 +57,17 @@ for future mobile app integration.
 
 ## Phase 3 — Gamification
 
-- [ ] 3.1 Points ledger — `user_points` migration + `UserPoint` model
-- [ ] 3.2 Streak tracking — `user_streaks` migration + `UserStreak` model
-- [ ] 3.3 `ScoringService` — award points, photo bonus, streak bonus
-- [ ] 3.4 `StreakService` — record activity, check milestones
-- [ ] 3.5 Wire observers — all log observers call scoring + streak services
-- [ ] 3.6 Achievements — migrations, models, `AchievementSeeder`
-- [ ] 3.7 `AchievementService` — check + award achievements
-- [ ] 3.8 User tasks — `user_tasks` + `user_task_completions` migrations + models
-- [ ] 3.9 Gamification controllers — `PointController`, `StreakController`, `AchievementController`, `UserTaskController`
+- [x] 3.1 Points ledger — `user_points` migration + `UserPoint` model
+- [x] 3.2 Streak tracking — `user_streaks` migration + `UserStreak` model
+- [x] 3.3 `ScoringService` — award points, photo bonus, streak bonus
+- [x] 3.4 `StreakService` — record activity, check milestones
+- [x] 3.5 Wire observers — all 5 log observers call scoring + streak + achievement services
+- [x] 3.6 Achievements — migrations, models, `AchievementSeeder` (10 achievements)
+- [x] 3.7 `AchievementService` — check + award achievements, condition evaluators
+- [x] 3.8 User tasks — `user_tasks` + `user_task_completions` migrations + models
+- [x] 3.9 Gamification controllers — `PointController`, `StreakController`, `AchievementController`, `UserTaskController`
+
+**Phase 3 complete.**
 
 ---
 

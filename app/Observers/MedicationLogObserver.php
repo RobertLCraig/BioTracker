@@ -3,16 +3,24 @@
 namespace App\Observers;
 
 use App\Models\MedicationLog;
+use App\Services\Scoring\AchievementService;
+use App\Services\Scoring\ScoringService;
+use App\Services\Streak\StreakService;
 
-/**
- * Observes MedicationLog events to trigger scoring and streak updates.
- * Scoring/Streak services are wired in Phase 3.
- */
 class MedicationLogObserver
 {
+    public function __construct(
+        private ScoringService $scoring,
+        private StreakService $streak,
+        private AchievementService $achievements,
+    ) {}
+
     public function created(MedicationLog $log): void
     {
-        // Phase 3: app(ScoringService::class)->award($log->user, $log, 'Logged medication');
-        // Phase 3: app(StreakService::class)->recordActivity($log->user);
+        $user = $log->user;
+
+        $this->scoring->award($user, $log, 'Logged medication');
+        $this->streak->recordActivity($user);
+        $this->achievements->check($user);
     }
 }

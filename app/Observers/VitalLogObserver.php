@@ -3,16 +3,24 @@
 namespace App\Observers;
 
 use App\Models\VitalLog;
+use App\Services\Scoring\AchievementService;
+use App\Services\Scoring\ScoringService;
+use App\Services\Streak\StreakService;
 
-/**
- * Observes VitalLog events to trigger scoring and streak updates.
- * Scoring/Streak services are wired in Phase 3.
- */
 class VitalLogObserver
 {
+    public function __construct(
+        private ScoringService $scoring,
+        private StreakService $streak,
+        private AchievementService $achievements,
+    ) {}
+
     public function created(VitalLog $log): void
     {
-        // Phase 3: app(ScoringService::class)->award($log->user, $log, 'Logged vital sign');
-        // Phase 3: app(StreakService::class)->recordActivity($log->user);
+        $user = $log->user;
+
+        $this->scoring->award($user, $log, 'Logged vital sign');
+        $this->streak->recordActivity($user);
+        $this->achievements->check($user);
     }
 }

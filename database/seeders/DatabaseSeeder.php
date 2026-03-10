@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ActivityTypeSeeder::class,
+            AchievementSeeder::class,
         ]);
 
         User::factory()->create([

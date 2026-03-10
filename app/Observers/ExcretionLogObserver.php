@@ -3,16 +3,29 @@
 namespace App\Observers;
 
 use App\Models\ExcretionLog;
+use App\Services\Scoring\AchievementService;
+use App\Services\Scoring\ScoringService;
+use App\Services\Streak\StreakService;
 
-/**
- * Observes ExcretionLog events to trigger scoring and streak updates.
- * Scoring/Streak services are wired in Phase 3.
- */
 class ExcretionLogObserver
 {
+    public function __construct(
+        private ScoringService $scoring,
+        private StreakService $streak,
+        private AchievementService $achievements,
+    ) {}
+
     public function created(ExcretionLog $log): void
     {
-        // Phase 3: app(ScoringService::class)->award($log->user, $log, 'Logged excretion');
-        // Phase 3: app(StreakService::class)->recordActivity($log->user);
+        $user = $log->user;
+
+        $this->scoring->award($user, $log, 'Logged excretion');
+        $this->streak->recordActivity($user);
+
+        if ($log->hasMedia('photos')) {
+            $this->scoring->awardPhotoBonus($user, $log);
+        }
+
+        $this->achievements->check($user);
     }
 }

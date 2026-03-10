@@ -3,19 +3,29 @@
 namespace App\Observers;
 
 use App\Models\ActivityLog;
+use App\Services\Scoring\AchievementService;
+use App\Services\Scoring\ScoringService;
+use App\Services\Streak\StreakService;
 
-/**
- * Observes ActivityLog events to trigger scoring and streak updates.
- * Scoring/Streak services are wired in Phase 3 — stubs are used here
- * so Phase 2 can be fully functional without Phase 3 dependencies.
- */
 class ActivityLogObserver
 {
+    public function __construct(
+        private ScoringService $scoring,
+        private StreakService $streak,
+        private AchievementService $achievements,
+    ) {}
+
     public function created(ActivityLog $log): void
     {
-        // Phase 3: app(ScoringService::class)->award($log->user, $log, 'Logged activity');
-        // Phase 3: app(StreakService::class)->recordActivity($log->user);
-        // Phase 3: if ($log->hasMedia('photos')) { app(ScoringService::class)->awardPhotoBonus($log->user, $log); }
-        // Phase 3: app(AchievementService::class)->check($log->user);
+        $user = $log->user;
+
+        $this->scoring->award($user, $log, 'Logged activity');
+        $this->streak->recordActivity($user);
+
+        if ($log->hasMedia('photos')) {
+            $this->scoring->awardPhotoBonus($user, $log);
+        }
+
+        $this->achievements->check($user);
     }
 }

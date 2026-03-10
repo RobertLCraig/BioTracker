@@ -3,16 +3,29 @@
 namespace App\Observers;
 
 use App\Models\SymptomLog;
+use App\Services\Scoring\AchievementService;
+use App\Services\Scoring\ScoringService;
+use App\Services\Streak\StreakService;
 
-/**
- * Observes SymptomLog events to trigger scoring and streak updates.
- * Scoring/Streak services are wired in Phase 3.
- */
 class SymptomLogObserver
 {
+    public function __construct(
+        private ScoringService $scoring,
+        private StreakService $streak,
+        private AchievementService $achievements,
+    ) {}
+
     public function created(SymptomLog $log): void
     {
-        // Phase 3: app(ScoringService::class)->award($log->user, $log, 'Logged symptom');
-        // Phase 3: app(StreakService::class)->recordActivity($log->user);
+        $user = $log->user;
+
+        $this->scoring->award($user, $log, 'Logged symptom');
+        $this->streak->recordActivity($user);
+
+        if ($log->hasMedia('photos')) {
+            $this->scoring->awardPhotoBonus($user, $log);
+        }
+
+        $this->achievements->check($user);
     }
 }

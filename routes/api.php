@@ -1,13 +1,17 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AchievementController;
 use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\ActivityTypeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ExcretionLogController;
 use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\MedicationLogController;
+use App\Http\Controllers\Api\V1\PointController;
+use App\Http\Controllers\Api\V1\StreakController;
 use App\Http\Controllers\Api\V1\SymptomLogController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\UserTaskController;
 use App\Http\Controllers\Api\V1\VitalLogController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,13 +51,13 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('symptom-logs',    SymptomLogController::class);
         Route::apiResource('vital-logs',      VitalLogController::class);
 
-        // ── Phase 3: Gamification (uncomment when ready) ─────────────────────
-        // Route::get('/points',                   [PointController::class, 'index']);
-        // Route::get('/points/history',            [PointController::class, 'history']);
-        // Route::get('/streaks',                   [StreakController::class, 'show']);
-        // Route::get('/achievements',              [AchievementController::class, 'index']);
-        // Route::apiResource('tasks',              UserTaskController::class);
-        // Route::post('/tasks/{task}/complete',    [UserTaskController::class, 'complete']);
+        // ── Phase 3: Gamification ────────────────────────────────────────────────
+        Route::get('/points',                 [PointController::class, 'index']);
+        Route::get('/points/history',         [PointController::class, 'history']);
+        Route::get('/streaks',                [StreakController::class, 'show']);
+        Route::get('/achievements',           [AchievementController::class, 'index']);
+        Route::apiResource('tasks',           UserTaskController::class);
+        Route::post('/tasks/{task}/complete', [UserTaskController::class, 'complete']);
 
         // ── Phase 4: Analytics (uncomment when ready) ────────────────────────
         // Route::get('/analytics/dashboard',       [AnalyticsController::class, 'dashboard']);
