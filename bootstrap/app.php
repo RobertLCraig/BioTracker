@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureTotpVerified;
+use App\Http\Middleware\ForceHttps;
+use App\Http\Middleware\SessionTimeout;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+
+        $middleware->alias([
+            'force.https' => ForceHttps::class,
+            'session.timeout' => SessionTimeout::class,
+            'totp.verified' => EnsureTotpVerified::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
