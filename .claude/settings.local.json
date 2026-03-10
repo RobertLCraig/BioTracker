@@ -5,7 +5,9 @@
       "Bash(php artisan:*)",
       "Bash(export PATH=\"/c/Users/r/.config/herd/bin:$PATH\")",
       "Bash(/c/Users/r/.config/herd/bin/php84 artisan:*)",
-      "Bash(\"/c/Users/r/.config/herd/bin/php84/php.exe\" artisan:*)"
+      "Bash(\"/c/Users/r/.config/herd/bin/php84/php.exe\" artisan:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

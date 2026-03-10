@@ -1,0 +1,121 @@
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
+
+const router = useRouter();
+const auth   = useAuthStore();
+
+const form         = ref({ email: '', password: '' });
+const error        = ref('');
+const loading      = ref(false);
+const totpRequired = ref(false);
+const totpCode     = ref('');
+const sessionToken = ref('');
+
+async function submit() {
+    error.value   = '';
+    loading.value = true;
+    try {
+        const { data } = await axios.post('/api/v1/login', form.value);
+        if (data.totp_required) {
+            totpRequired.value = true;
+            sessionToken.value = data.session_token ?? '';
+        } else {
+            auth.setAuth(data.user, data.token);
+            router.push('/');
+        }
+    } catch (e) {
+        error.value = e.response?.data?.message ?? 'Login failed.';
+    } finally {
+        loading.value = false;
+    }
+}
+
+async function submitTotp() {
+    error.value   = '';
+    loading.value = true;
+    try {
+        const { data } = await axios.post('/api/v1/login/totp', {
+            code:          totpCode.value,
+            session_token: sessionToken.value,
+        });
+        auth.setAuth(data.user, data.token);
+        router.push('/');
+    } catch (e) {
+        error.value = e.response?.data?.message ?? 'Invalid code.';
+    } finally {
+        loading.value = false;
+    }
+}
+</script>
+
+<template>
+  <div class="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+      <!-- Logo -->
+      <div class="flex justify-center mb-8">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center">
+            <svg class="w-5.5 h-5.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <span class="text-2xl font-bold tracking-tight">BioTracker</span>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+        <!-- TOTP step -->
+        <template v-if="totpRequired">
+          <h1 class="text-xl font-semibold mb-1">Two-factor auth</h1>
+          <p class="text-sm text-zinc-400 mb-6">Enter the 6-digit code from your authenticator app.</p>
+          <form @submit.prevent="submitTotp" class="space-y-4">
+            <input
+              v-model="totpCode"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="000000"
+              autofocus
+              class="w-full px-3 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center text-2xl tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            />
+            <div v-if="error" class="text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{{ error }}</div>
+            <button type="submit" :disabled="loading"
+              class="w-full py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors">
+              {{ loading ? 'Verifying…' : 'Verify' }}
+            </button>
+          </form>
+        </template>
+
+        <!-- Login step -->
+        <template v-else>
+          <h1 class="text-xl font-semibold mb-1">Sign in</h1>
+          <p class="text-sm text-zinc-400 mb-6">Welcome back to your health journal.</p>
+          <form @submit.prevent="submit" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Email</label>
+              <input v-model="form.email" type="email" placeholder="you@example.com" required autofocus
+                class="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Password</label>
+              <input v-model="form.password" type="password" placeholder="••••••••" required
+                class="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
+            </div>
+            <div v-if="error" class="text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{{ error }}</div>
+            <button type="submit" :disabled="loading"
+              class="w-full py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors">
+              {{ loading ? 'Signing in…' : 'Sign in' }}
+            </button>
+          </form>
+          <p class="text-sm text-center text-zinc-500 mt-6">
+            Don't have an account?
+            <RouterLink to="/register" class="text-teal-400 hover:text-teal-300 font-medium">Sign up</RouterLink>
+          </p>
+        </template>
+      </div>
+    </div>
+  </div>
+</template>
