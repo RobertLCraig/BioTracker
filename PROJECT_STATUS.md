@@ -1,8 +1,8 @@
 # BioTracker — Project Status
 
-Last updated: 2026-03-10
-Current phase: Phase 2 — Core Logging
-Current step: 2.1
+Last updated: 2026-03-10T17:30:00Z
+Current phase: Phase 2 — Core Logging (COMPLETE — see Phase 3 next)
+Current step: 3.1
 
 ## Overview
 
@@ -36,20 +36,22 @@ for future mobile app integration.
 
 ## Phase 2 — Core Logging
 
-- [/] 2.1 Activity types — migration, model, `ActivityTypeSeeder`
-- [ ] 2.2 Activity logs — migration, model, `ActivityLogObserver` (stub)
-- [ ] 2.3 Activity controllers — `ActivityTypeController`, `ActivityLogController`, form requests, resources
-- [ ] 2.4 Excretion logs — migration + model
-- [ ] 2.5 Excretion controller — `ExcretionLogController`, form request, resource
-- [ ] 2.6 Medications — `medications` + `medication_logs` migrations + models
-- [ ] 2.7 Medication controllers — `MedicationController`, `MedicationLogController`, form requests, resources
-- [ ] 2.8 Symptom logs — migration + model
-- [ ] 2.9 Symptom controller — `SymptomLogController`, form request, resource
-- [ ] 2.10 Vital logs — migration + model
-- [ ] 2.11 Vital controller — `VitalLogController`, form request, resource
-- [ ] 2.12 Spatie Media Library — configure collections + conversions
-- [ ] 2.13 API routes — register all `/api/v1/` routes in `routes/api.php`
-- [ ] 2.14 API Resources — all transformer classes
+- [x] 2.1 Activity types — migration, model, `ActivityTypeSeeder`
+- [x] 2.2 Activity logs — migration, model, `ActivityLogObserver` (stub)
+- [x] 2.3 Activity controllers — `ActivityTypeController`, `ActivityLogController`, form requests, resources
+- [x] 2.4 Excretion logs — migration + model
+- [x] 2.5 Excretion controller — `ExcretionLogController`, form request, resource
+- [x] 2.6 Medications — `medications` + `medication_logs` migrations + models
+- [x] 2.7 Medication controllers — `MedicationController`, `MedicationLogController`, form requests, resources
+- [x] 2.8 Symptom logs — migration + model
+- [x] 2.9 Symptom controller — `SymptomLogController`, form request, resource
+- [x] 2.10 Vital logs — migration + model
+- [x] 2.11 Vital controller — `VitalLogController`, form request, resource
+- [x] 2.12 Spatie Media Library — configure collections + conversions on all HasMedia models
+- [x] 2.13 API routes — register all `/api/v1/` routes in `routes/api.php` (44 routes total)
+- [x] 2.14 API Resources — all transformer classes
+
+**Phase 2 complete.**
 
 ---
 

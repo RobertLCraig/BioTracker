@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash($env:PATH=\"C:\\\\Users\\\\r\\\\.config\\\\herd\\\\bin;$env:PATH\")",
+      "Bash(php artisan:*)",
+      "Bash(export PATH=\"/c/Users/r/.config/herd/bin:$PATH\")",
+      "Bash(/c/Users/r/.config/herd/bin/php84 artisan:*)",
+      "Bash(\"/c/Users/r/.config/herd/bin/php84/php.exe\" artisan:*)"
+    ]
+  }
+}
