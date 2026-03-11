@@ -11,6 +11,10 @@ const routes = [
         children: [
             { path: '',             name: 'dashboard',    component: () => import('@/views/DashboardView.vue') },
             { path: 'activity',     name: 'activity',     component: () => import('@/views/ActivityView.vue') },
+            { path: 'food',         name: 'food',         component: () => import('@/views/FoodView.vue') },
+            { path: 'drink',        name: 'drink',        component: () => import('@/views/DrinkView.vue') },
+            { path: 'exercise',     name: 'exercise',     component: () => import('@/views/ExerciseView.vue') },
+            { path: 'sleep',        name: 'sleep',        component: () => import('@/views/SleepView.vue') },
             { path: 'excretion',    name: 'excretion',    component: () => import('@/views/ExcretionView.vue') },
             { path: 'medications',  name: 'medications',  component: () => import('@/views/MedicationsView.vue') },
             { path: 'symptoms',     name: 'symptoms',     component: () => import('@/views/SymptomsView.vue') },

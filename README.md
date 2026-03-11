@@ -37,10 +37,11 @@ After running `php artisan migrate --seed`, a test account is available:
 ## Features
 
 ### Health Logging
-- **Activity** — food, drink, exercise, sleep, custom types; calorie and duration tracking; photo attachments
-- **Excretion** — type, Bristol scale, colour, blood presence, urgency, pain level
-- **Medications** — manage prescriptions; log each dose taken
-- **Symptoms** — symptom name, severity (1–10), body area, duration
+- **Food** — dedicated food log with meal-time suggestions (breakfast/lunch/dinner/snack based on time of day), food name, quantity, unit, calories, notes, photo attachments; full flexibility to log any food at any time
+- **Activity** — exercise, sleep, drink, custom types; calorie and duration tracking; photo attachments
+- **Excretion** — type, Bristol scale, colour, blood presence, urgency, pain level; photo attachments
+- **Medications** — manage prescriptions with reminder times; "Due around now" panel with one-tap "Take now" logging; browser push notification reminders (Notifications API); log each dose taken
+- **Symptoms** — symptom name, severity (1–10), body area, duration; photo attachments
 - **Vital signs** — weight, blood pressure, temperature, heart rate, blood sugar, SpO₂
 
 ### Gamification
@@ -198,11 +199,11 @@ app/
     └── Scoring/                # ScoringService, AchievementService, StreakService
 
 resources/js/
-├── components/                 # AppLayout, LogList
-├── composables/                # useApi (Axios wrapper)
+├── components/                 # AppLayout, LogList, PhotoDropzone
+├── composables/                # useApi (Axios + multipart wrapper)
 ├── router/                     # Vue Router with auth guards
 ├── stores/                     # Pinia auth store
-└── views/                      # 10 page views + auth views
+└── views/                      # 11 page views (incl. Food) + auth views
 ```
 
 ---
@@ -228,3 +229,56 @@ Running `php artisan migrate --seed` creates:
 - **Activity types** (system): Food, Drink, Exercise, Sleep, Custom
 - **Achievements** (10 total): First Log, Getting Started, Week Warrior, Fortnight Fighter, Month Master, Century Club, Photographer, Health Historian, Pill Tracker, Gut Instinct
 - **Test user**: `test@example.com` / `password`
+
+### Demo Data (DemoDataSeeder)
+
+Automatically runs as part of `php artisan migrate --seed` (or standalone: `php artisan db:seed --class=DemoDataSeeder`).
+
+The demo account is pre-populated with **182 days (26 weeks) of realistic health data** showing a health-improvement journey:
+
+| Metric | Start (week 1) | End (week 26) |
+|--------|----------------|---------------|
+| Weight | ~87.2 kg | ~81.4 kg |
+| Blood pressure | ~136/88 mmHg | ~122/79 mmHg |
+| Resting heart rate | ~80 bpm | ~62 bpm |
+| Daily calories | ~2,400 kcal | ~2,000 kcal |
+| Sleep | ~6.2 h/night | ~7.8 h/night |
+| Exercise frequency | 3×/week | 5×/week |
+
+Includes: food logs (breakfast/lunch/dinner/snacks), water intake, exercise sessions (running, cycling, weights, swimming, HIIT), weekly weight + twice-weekly blood pressure + post-exercise heart rate, daily excretion logs, symptom logs, medication logs (Lisinopril + Vitamin D3), all achievements unlocked, 182-day streak, and accumulated gamification points.
+
+The seeder is **idempotent** — re-running when demo data already exists is a no-op.
+
+---
+
+## Roadmap
+
+### Food Database & AI Calorie Estimation
+
+A future version will add a structured food database and intelligent calorie estimation:
+
+#### Phase 1 — Food Item Database
+- `food_items` table: name, brand, serving size, calories per 100 g, macros (protein/fat/carbs/fibre), barcode
+- Seed with Open Food Facts data (~2.5 M items, MIT licensed)
+- `GET /api/v1/food/search?q=` — instant full-text search
+- Link food log entries to a canonical `food_item_id` (nullable — manual entry still supported)
+
+#### Phase 2 — Barcode Scanning
+- Mobile-friendly barcode scanner (BarcodeDetector API or ZXing-JS)
+- `GET /api/v1/food/barcode/{ean}` — look up item by EAN-13/UPC
+
+#### Phase 3 — Photo-based Portion & Calorie Estimation
+- User uploads a photo of their plate + an optional reference object (coin, credit card) for scale
+- Server-side pipeline:
+  1. **Object detection** (YOLO v8 / Detectron2) — identify food items in the image
+  2. **Depth / volume estimation** — estimate portion size from reference object or known dish dimensions
+  3. **Calorie lookup** — match detected items to food database entries
+  4. **Claude Vision API** — fallback natural-language description → calorie estimate for unrecognised foods
+- Returns a pre-filled food log form with suggested food name, quantity, and calories for user review before saving
+- All AI suggestions are editable — user always has final say
+- Architecture: queued job (`EstimateCaloriesFromPhotoJob`), stores intermediate results in `photo_analysis_results` table, pushes result via Laravel Echo / Pusher when ready
+
+#### Phase 4 — Meal Plans
+- Template meals users can save and re-log with one click
+- Weekly meal planner with calorie budget tracking
+- Nutritional summaries (macros, vitamins) on dashboard

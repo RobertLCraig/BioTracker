@@ -12,16 +12,16 @@ const error        = ref('');
 const loading      = ref(false);
 const totpRequired = ref(false);
 const totpCode     = ref('');
-const sessionToken = ref('');
+const loginToken   = ref('');
 
 async function submit() {
     error.value   = '';
     loading.value = true;
     try {
         const { data } = await axios.post('/api/v1/login', form.value);
-        if (data.totp_required) {
+        if (data.requires_totp) {
             totpRequired.value = true;
-            sessionToken.value = data.session_token ?? '';
+            loginToken.value   = data.login_token ?? '';
         } else {
             auth.setAuth(data.user, data.token);
             router.push('/');
@@ -38,8 +38,8 @@ async function submitTotp() {
     loading.value = true;
     try {
         const { data } = await axios.post('/api/v1/login/totp', {
-            code:          totpCode.value,
-            session_token: sessionToken.value,
+            code:        totpCode.value,
+            login_token: loginToken.value,
         });
         auth.setAuth(data.user, data.token);
         router.push('/');
@@ -93,16 +93,18 @@ async function submitTotp() {
         <template v-else>
           <h1 class="text-xl font-semibold mb-1">Sign in</h1>
           <p class="text-sm text-zinc-400 mb-6">Welcome back to your health journal.</p>
-          <form @submit.prevent="submit" class="space-y-4">
+          <form @submit.prevent="submit" class="space-y-4" autocomplete="off">
             <div>
-              <label class="block text-sm font-medium mb-1.5">Email</label>
+              <label class="block text-sm font-medium mb-1.5 text-zinc-200">Email</label>
               <input v-model="form.email" type="email" placeholder="you@example.com" required autofocus
-                class="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
+                autocomplete="username"
+                class="input-field" />
             </div>
             <div>
-              <label class="block text-sm font-medium mb-1.5">Password</label>
+              <label class="block text-sm font-medium mb-1.5 text-zinc-200">Password</label>
               <input v-model="form.password" type="password" placeholder="••••••••" required
-                class="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
+                autocomplete="current-password"
+                class="input-field" />
             </div>
             <div v-if="error" class="text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{{ error }}</div>
             <button type="submit" :disabled="loading"

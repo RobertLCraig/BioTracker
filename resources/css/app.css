@@ -9,3 +9,24 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ── Shared input style ───────────────────────────────────────── */
+@layer components {
+    .input-field {
+        @apply w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-100
+               placeholder:text-zinc-500
+               focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent
+               transition-colors;
+    }
+}
+
+/* ── Prevent browser autofill from overriding our dark theme ─── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 9999px #27272a inset !important; /* zinc-800 */
+    -webkit-text-fill-color: #f4f4f5 !important;               /* zinc-100 */
+    caret-color: #f4f4f5;
+    transition: background-color 9999s ease-in-out 0s;
+}

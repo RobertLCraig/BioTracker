@@ -23,9 +23,17 @@ axios.interceptors.response.use(
 const BASE = '/api/v1';
 
 export function useApi() {
-    const get  = (path, params = {}) => axios.get(`${BASE}${path}`, { params });
-    const post = (path, data = {})   => axios.post(`${BASE}${path}`, data);
+    const get      = (path, params = {}) => axios.get(`${BASE}${path}`, { params });
+    const post     = (path, data = {})   => axios.post(`${BASE}${path}`, data);
+    const postForm = (path, formData)    => axios.post(`${BASE}${path}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    const putForm  = (path, formData)    => axios.post(`${BASE}${path}`, formData, {
+        // Laravel resource updates via POST + _method spoofing for multipart
+        headers: { 'Content-Type': 'multipart/form-data' },
+        params:  { _method: 'PUT' },
+    });
     const put  = (path, data = {})   => axios.put(`${BASE}${path}`, data);
     const del  = (path)              => axios.delete(`${BASE}${path}`);
-    return { get, post, put, del };
+    return { get, post, postForm, putForm, put, del };
 }

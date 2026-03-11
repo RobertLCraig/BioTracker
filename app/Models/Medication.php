@@ -20,10 +20,12 @@ class Medication extends Model
         'prescribed_by',
         'notes',
         'is_active',
+        'reminder_times',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active'      => 'boolean',
+        'reminder_times' => 'array',
     ];
 
     public function getNameAttribute(?string $value): ?string

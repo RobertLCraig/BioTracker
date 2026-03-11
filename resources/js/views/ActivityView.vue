@@ -1,126 +1,127 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { RouterLink } from 'vue-router';
 import { useApi } from '@/composables/useApi';
-import LogList from '@/components/LogList.vue';
 
-const api      = useApi();
-const logs     = ref([]);
-const types    = ref([]);
-const loading  = ref(true);
-const showForm = ref(false);
-const saving   = ref(false);
-const error    = ref('');
+const { get } = useApi();
+const recentLogs = ref([]);
+const loading    = ref(true);
 
-const blank = () => ({ activity_type_id: '', logged_at: new Date().toISOString().slice(0, 16), duration_minutes: '', quantity: '', unit: '', calories: '', notes: '' });
-const form  = ref(blank());
-
-const columns = [
-    { key: 'logged_at',        label: 'Date',     format: r => new Date(r.logged_at).toLocaleString() },
-    { key: 'type',             label: 'Type',     format: r => r.activity_type?.name ?? '—' },
-    { key: 'duration_minutes', label: 'Duration', format: r => r.duration_minutes ? `${r.duration_minutes} min` : '—' },
-    { key: 'quantity',         label: 'Qty',      format: r => r.quantity ? `${r.quantity} ${r.unit ?? ''}`.trim() : '—' },
-    { key: 'calories',         label: 'Calories', format: r => r.calories ?? '—' },
-    { key: 'notes',            label: 'Notes',    format: r => r.notes ?? '—' },
+// Activity sub-sections
+const sections = [
+    {
+        label:   'Food',
+        icon:    '🍽',
+        to:      '/food',
+        desc:    'Log meals, snacks, and calorie intake',
+        color:   'border-orange-500/30 bg-orange-500/5 hover:border-orange-500/60',
+    },
+    {
+        label:   'Drinks',
+        icon:    '💧',
+        to:      '/drink',
+        desc:    'Track water and beverage intake',
+        color:   'border-blue-500/30 bg-blue-500/5 hover:border-blue-500/60',
+    },
+    {
+        label:   'Exercise',
+        icon:    '⚡',
+        to:      '/exercise',
+        desc:    'Record workouts and physical activity',
+        color:   'border-green-500/30 bg-green-500/5 hover:border-green-500/60',
+    },
+    {
+        label:   'Sleep',
+        icon:    '🌙',
+        to:      '/sleep',
+        desc:    'Monitor sleep duration and quality',
+        color:   'border-purple-500/30 bg-purple-500/5 hover:border-purple-500/60',
+    },
 ];
 
-async function load() {
+async function fetchLogs() {
     loading.value = true;
-    const [lRes, tRes] = await Promise.all([api.get('/activity-logs'), api.get('/activity-types')]);
-    logs.value  = lRes.data.data;
-    types.value = tRes.data.data;
-    loading.value = false;
-}
-
-async function save() {
-    error.value  = '';
-    saving.value = true;
     try {
-        const payload = Object.fromEntries(Object.entries(form.value).filter(([, v]) => v !== ''));
-        await api.post('/activity-logs', payload);
-        showForm.value = false;
-        form.value = blank();
-        await load();
-    } catch (e) {
-        error.value = e.response?.data?.message ?? 'Save failed.';
-    } finally {
-        saving.value = false;
+        const { data } = await get('/activity-logs', { per_page: 30 });
+        recentLogs.value = data.data ?? data;
+    } catch { /* ignore */ } finally {
+        loading.value = false;
     }
 }
 
-async function remove(id) {
-    if (!confirm('Delete this log?')) return;
-    await api.del(`/activity-logs/${id}`);
-    await load();
+function fmt(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-onMounted(load);
+function typeIcon(log) {
+    const slug = log.activity_type?.slug;
+    if (slug === 'food')     return '🍽';
+    if (slug === 'drink')    return '💧';
+    if (slug === 'exercise') return '⚡';
+    if (slug === 'sleep')    return '🌙';
+    return '⭐';
+}
+
+onMounted(fetchLogs);
 </script>
 
 <template>
-  <div class="p-6 max-w-5xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold">Activity Logs</h1>
-      <button @click="showForm = !showForm"
-        class="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white text-sm font-semibold rounded-lg transition-colors">
-        + New Log
-      </button>
+  <div class="p-6 max-w-5xl mx-auto space-y-6">
+    <div>
+      <h1 class="text-2xl font-bold">Activity Overview</h1>
+      <p class="text-sm text-zinc-500 mt-0.5">Track food, drinks, exercise, and sleep from one place</p>
     </div>
 
-    <div v-if="showForm" class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
-      <h2 class="font-semibold mb-4 text-sm text-zinc-400 uppercase tracking-wide">Log Activity</h2>
-      <form @submit.prevent="save" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Type *</label>
-          <select v-model="form.activity_type_id" required
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <option value="">Select type…</option>
-            <option v-for="t in types" :key="t.id" :value="t.id">{{ t.name }}</option>
-          </select>
+    <!-- Section cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <RouterLink
+        v-for="s in sections"
+        :key="s.label"
+        :to="s.to"
+        :class="['group flex items-start gap-4 border rounded-xl p-5 transition-colors', s.color]"
+      >
+        <span class="text-3xl shrink-0 mt-0.5">{{ s.icon }}</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <p class="font-semibold">{{ s.label }}</p>
+            <RouterLink
+              :to="`${s.to}?quickAdd=1`"
+              class="w-7 h-7 rounded-full bg-zinc-700/60 hover:bg-teal-600 text-zinc-300 hover:text-white text-sm font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+              :title="`Log ${s.label}`"
+              @click.stop
+            >+</RouterLink>
+          </div>
+          <p class="text-sm text-zinc-400 mt-0.5">{{ s.desc }}</p>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Date & time *</label>
-          <input v-model="form.logged_at" type="datetime-local" required
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Duration (min)</label>
-          <input v-model="form.duration_minutes" type="number" min="0" placeholder="30"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Quantity</label>
-          <input v-model="form.quantity" type="number" step="0.01" placeholder="1.5"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Unit</label>
-          <input v-model="form.unit" type="text" placeholder="ml, kg, reps…"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Calories</label>
-          <input v-model="form.calories" type="number" min="0" placeholder="250"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-        <div class="sm:col-span-2 lg:col-span-3">
-          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Notes</label>
-          <input v-model="form.notes" type="text" placeholder="Optional notes…"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        </div>
-        <div v-if="error" class="sm:col-span-2 lg:col-span-3 text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{{ error }}</div>
-        <div class="sm:col-span-2 lg:col-span-3 flex gap-3">
-          <button type="submit" :disabled="saving"
-            class="px-4 py-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-            {{ saving ? 'Saving…' : 'Save' }}
-          </button>
-          <button type="button" @click="showForm = false"
-            class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm rounded-lg transition-colors">
-            Cancel
-          </button>
-        </div>
-      </form>
+      </RouterLink>
     </div>
 
-    <LogList :logs="logs" :loading="loading" :columns="columns" @delete="remove" />
+    <!-- Recent logs across all activity types -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Recent Activity Logs</h2>
+      </div>
+      <div v-if="loading" class="px-5 py-8 text-sm text-zinc-500 text-center">Loading…</div>
+      <div v-else-if="!recentLogs.length" class="px-5 py-8 text-sm text-zinc-500 text-center">
+        No activity logs yet. Start logging from one of the sections above.
+      </div>
+      <ul v-else class="divide-y divide-zinc-800">
+        <li v-for="log in recentLogs" :key="log.id" class="flex items-center gap-4 px-5 py-3.5">
+          <span class="text-lg shrink-0">{{ typeIcon(log) }}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium">{{ log.activity_type?.name ?? 'Activity' }}</p>
+            <p class="text-xs text-zinc-500">
+              <span v-if="log.duration_minutes">{{ log.duration_minutes }} min</span>
+              <span v-if="log.duration_minutes && log.calories"> · </span>
+              <span v-if="log.calories">{{ log.calories }} kcal</span>
+              <span v-if="log.quantity">{{ log.quantity }} {{ log.unit }}</span>
+              <span v-if="log.notes && !log.duration_minutes && !log.calories && !log.quantity">{{ log.notes }}</span>
+            </p>
+          </div>
+          <span class="text-xs text-zinc-600 shrink-0">{{ fmt(log.logged_at) }}</span>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>

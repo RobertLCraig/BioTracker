@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useApi } from '@/composables/useApi';
 import LogList from '@/components/LogList.vue';
 
-const api      = useApi();
+const { get, post, del } = useApi();
+const route = useRoute();
 const logs     = ref([]);
 const loading  = ref(true);
 const showForm = ref(false);
@@ -37,7 +39,7 @@ const columns = [
 
 async function load() {
     loading.value = true;
-    const res = await api.get('/vital-logs');
+    const res = await get('/vital-logs');
     logs.value = res.data.data;
     loading.value = false;
 }
@@ -47,7 +49,7 @@ async function save() {
     saving.value = true;
     try {
         const payload = Object.fromEntries(Object.entries(form.value).filter(([, v]) => v !== ''));
-        await api.post('/vital-logs', payload);
+        await post('/vital-logs', payload);
         showForm.value = false;
         form.value = blank();
         await load();
@@ -60,11 +62,14 @@ async function save() {
 
 async function remove(id) {
     if (!confirm('Delete?')) return;
-    await api.del(`/vital-logs/${id}`);
+    await del(`/vital-logs/${id}`);
     await load();
 }
 
-onMounted(load);
+onMounted(async () => {
+    await load();
+    if (route.query.quickAdd === '1') showForm.value = true;
+});
 </script>
 
 <template>
@@ -78,11 +83,11 @@ onMounted(load);
     </div>
 
     <div v-if="showForm" class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
-      <form @submit.prevent="save" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <form @submit.prevent="save" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" autocomplete="off">
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Type *</label>
           <select v-model="form.type" required @change="onTypeChange"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            class="input-field" autocomplete="off">
             <option value="">Select type…</option>
             <option v-for="t in TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
           </select>
@@ -90,27 +95,27 @@ onMounted(load);
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Value *</label>
           <input v-model="form.value" type="number" step="0.01" required placeholder="120"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div v-if="form.type === 'blood_pressure'">
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Diastolic</label>
           <input v-model="form.secondary_value" type="number" step="0.01" placeholder="80"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Unit</label>
           <input v-model="form.unit" type="text" placeholder="bpm"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Date & time *</label>
           <input v-model="form.logged_at" type="datetime-local" required
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Notes</label>
           <input v-model="form.notes" type="text" placeholder="Optional"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div v-if="error" class="sm:col-span-2 lg:col-span-3 text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{{ error }}</div>
         <div class="sm:col-span-2 lg:col-span-3 flex gap-3">

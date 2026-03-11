@@ -36,12 +36,71 @@ class AnalyticsService
             ->where('user_id', $user->id)
             ->first();
 
-        $recentLogs = ActivityLog::withoutGlobalScopes()
+        // Merge recent entries from all log types into a single list
+        $recentActivity = collect();
+
+        ActivityLog::withoutGlobalScopes()
             ->with('activityType')
             ->where('user_id', $user->id)
             ->orderByDesc('logged_at')
+            ->limit(10)
+            ->get()
+            ->each(fn ($l) => $recentActivity->push([
+                'kind'       => 'activity',
+                'id'         => $l->id,
+                'label'      => $l->activityType?->name ?? 'Activity',
+                'sub'        => collect([$l->duration_minutes ? $l->duration_minutes . ' min' : null, $l->calories ? $l->calories . ' kcal' : null])->filter()->join(' · '),
+                'icon'       => $l->activityType?->icon ?? '⭐',
+                'logged_at'  => $l->logged_at?->toIso8601String(),
+            ]));
+
+        VitalLog::withoutGlobalScopes()
+            ->where('user_id', $user->id)
+            ->orderByDesc('logged_at')
             ->limit(5)
-            ->get();
+            ->get()
+            ->each(fn ($l) => $recentActivity->push([
+                'kind'      => 'vital',
+                'id'        => $l->id,
+                'label'     => ucwords(str_replace('_', ' ', $l->type instanceof \BackedEnum ? $l->type->value : $l->type)),
+                'sub'       => $l->secondary_value ? "{$l->value} / {$l->secondary_value} {$l->unit}" : "{$l->value} {$l->unit}",
+                'icon'      => '🩺',
+                'logged_at' => $l->logged_at?->toIso8601String(),
+            ]));
+
+        SymptomLog::withoutGlobalScopes()
+            ->where('user_id', $user->id)
+            ->orderByDesc('logged_at')
+            ->limit(5)
+            ->get()
+            ->each(fn ($l) => $recentActivity->push([
+                'kind'      => 'symptom',
+                'id'        => $l->id,
+                'label'     => $l->symptom ?? 'Symptom',
+                'sub'       => "Severity {$l->severity}/10" . ($l->body_area ? " · {$l->body_area}" : ''),
+                'icon'      => '🩹',
+                'logged_at' => $l->logged_at?->toIso8601String(),
+            ]));
+
+        MedicationLog::withoutGlobalScopes()
+            ->with('medication')
+            ->where('user_id', $user->id)
+            ->orderByDesc('taken_at')
+            ->limit(5)
+            ->get()
+            ->each(fn ($l) => $recentActivity->push([
+                'kind'      => 'medication',
+                'id'        => $l->id,
+                'label'     => $l->medication?->name ?? 'Medication',
+                'sub'       => $l->dosage_taken ?? '',
+                'icon'      => '💊',
+                'logged_at' => $l->taken_at?->toIso8601String(),
+            ]));
+
+        $recentLogs = $recentActivity
+            ->sortByDesc('logged_at')
+            ->values()
+            ->take(10);
 
         $totalPoints = $this->scoring->getBalance($user);
 

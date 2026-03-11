@@ -1,14 +1,18 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useApi } from '@/composables/useApi';
 import LogList from '@/components/LogList.vue';
+import PhotoDropzone from '@/components/PhotoDropzone.vue';
 
-const api      = useApi();
+const { get, post, postForm, del } = useApi();
+const route = useRoute();
 const logs     = ref([]);
 const loading  = ref(true);
 const showForm = ref(false);
 const saving   = ref(false);
 const error    = ref('');
+const photos   = ref([]);
 
 const blank = () => ({ symptom: '', severity: 5, body_area: '', logged_at: new Date().toISOString().slice(0, 16), duration_minutes: '', notes: '' });
 const form  = ref(blank());
@@ -24,7 +28,7 @@ const columns = [
 
 async function load() {
     loading.value = true;
-    const res = await api.get('/symptom-logs');
+    const res = await get('/symptom-logs');
     logs.value = res.data.data;
     loading.value = false;
 }
@@ -33,10 +37,18 @@ async function save() {
     error.value  = '';
     saving.value = true;
     try {
-        const payload = Object.fromEntries(Object.entries(form.value).filter(([, v]) => v !== ''));
-        await api.post('/symptom-logs', payload);
+        if (photos.value.length) {
+            const fd = new FormData();
+            Object.entries(form.value).forEach(([k, v]) => { if (v !== '') fd.append(k, v); });
+            photos.value.forEach(f => fd.append('photos[]', f));
+            await postForm('/symptom-logs', fd);
+        } else {
+            const payload = Object.fromEntries(Object.entries(form.value).filter(([, v]) => v !== ''));
+            await post('/symptom-logs', payload);
+        }
         showForm.value = false;
-        form.value = blank();
+        form.value  = blank();
+        photos.value = [];
         await load();
     } catch (e) {
         error.value = e.response?.data?.message ?? 'Save failed.';
@@ -47,11 +59,14 @@ async function save() {
 
 async function remove(id) {
     if (!confirm('Delete this log?')) return;
-    await api.del(`/symptom-logs/${id}`);
+    await del(`/symptom-logs/${id}`);
     await load();
 }
 
-onMounted(load);
+onMounted(async () => {
+    await load();
+    if (route.query.quickAdd === '1') showForm.value = true;
+});
 </script>
 
 <template>
@@ -65,11 +80,11 @@ onMounted(load);
     </div>
 
     <div v-if="showForm" class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
-      <form @submit.prevent="save" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <form @submit.prevent="save" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" autocomplete="off">
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Symptom *</label>
           <input v-model="form.symptom" type="text" required placeholder="e.g. Headache" autofocus
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Severity: <span class="text-zinc-100 font-semibold">{{ form.severity }}</span>/10</label>
@@ -78,22 +93,26 @@ onMounted(load);
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Body area</label>
           <input v-model="form.body_area" type="text" placeholder="Head, Chest, Abdomen…"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Date & time *</label>
           <input v-model="form.logged_at" type="datetime-local" required
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Duration (min)</label>
           <input v-model="form.duration_minutes" type="number" min="0" placeholder="30"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Notes</label>
           <input v-model="form.notes" type="text" placeholder="Optional"
-            class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            class="input-field" autocomplete="off" />
+        </div>
+        <div class="sm:col-span-2 lg:col-span-3">
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Photos <span class="text-zinc-600">(optional)</span></label>
+          <PhotoDropzone v-model="photos" />
         </div>
         <div v-if="error" class="sm:col-span-2 lg:col-span-3 text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{{ error }}</div>
         <div class="sm:col-span-2 lg:col-span-3 flex gap-3">
