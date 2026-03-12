@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+import { startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 
 const router = useRouter();
 const auth   = useAuthStore();
@@ -13,6 +14,9 @@ const loading      = ref(false);
 const totpRequired = ref(false);
 const totpCode     = ref('');
 const loginToken   = ref('');
+
+const passkeyLoading    = ref(false);
+const webAuthnSupported = browserSupportsWebAuthn();
 
 async function submit() {
     error.value   = '';
@@ -47,6 +51,35 @@ async function submitTotp() {
         error.value = e.response?.data?.message ?? 'Invalid code.';
     } finally {
         loading.value = false;
+    }
+}
+
+async function loginWithPasskey() {
+    error.value         = '';
+    passkeyLoading.value = true;
+    try {
+        // 1. Get authentication challenge
+        const { data: challengeData } = await axios.get('/api/v1/passkeys/challenge');
+
+        // 2. Trigger browser authenticator
+        const assertion = await startAuthentication({ optionsJSON: challengeData.options });
+
+        // 3. Verify with server
+        const { data } = await axios.post('/api/v1/passkeys/authenticate', {
+            challenge_token: challengeData.challenge_token,
+            credential:      assertion,
+        });
+
+        auth.setAuth(data.user, data.token);
+        router.push('/');
+    } catch (e) {
+        if (e.name === 'NotAllowedError') {
+            error.value = 'Passkey login cancelled.';
+        } else {
+            error.value = e.response?.data?.message ?? e.message ?? 'Passkey login failed.';
+        }
+    } finally {
+        passkeyLoading.value = false;
     }
 }
 </script>
@@ -112,6 +145,23 @@ async function submitTotp() {
               {{ loading ? 'Signing in…' : 'Sign in' }}
             </button>
           </form>
+
+          <!-- Passkey login -->
+          <template v-if="webAuthnSupported">
+            <div class="flex items-center gap-3 my-5">
+              <div class="flex-1 h-px bg-zinc-800"></div>
+              <span class="text-xs text-zinc-600">or</span>
+              <div class="flex-1 h-px bg-zinc-800"></div>
+            </div>
+            <button @click="loginWithPasskey" :disabled="passkeyLoading"
+              class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-zinc-700 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
+              <svg class="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+              </svg>
+              {{ passkeyLoading ? 'Waiting for device…' : 'Sign in with passkey' }}
+            </button>
+          </template>
+
           <p class="text-sm text-center text-zinc-500 mt-6">
             Don't have an account?
             <RouterLink to="/register" class="text-teal-400 hover:text-teal-300 font-medium">Sign up</RouterLink>

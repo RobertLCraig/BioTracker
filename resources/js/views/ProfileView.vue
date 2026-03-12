@@ -1,7 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+import {
+    startRegistration,
+    startAuthentication,
+    browserSupportsWebAuthn,
+} from '@simplewebauthn/browser';
 
 const auth    = useAuthStore();
 const saving  = ref(false);
@@ -41,6 +46,65 @@ async function exportData() {
         alert('Export failed. Please try again.');
     }
 }
+
+// ── Passkeys ────────────────────────────────────────────────────────────────
+const passkeys        = ref([]);
+const passkeyName     = ref('');
+const passkeyWorking  = ref(false);
+const passkeyError    = ref('');
+const passkeySuccess  = ref('');
+const webAuthnSupported = browserSupportsWebAuthn();
+
+async function loadPasskeys() {
+    try {
+        const { data } = await axios.get('/api/v1/user/passkeys');
+        passkeys.value = data.data;
+    } catch { /* silently fail */ }
+}
+
+async function addPasskey() {
+    passkeyError.value   = '';
+    passkeySuccess.value = '';
+    passkeyWorking.value = true;
+    try {
+        // 1. Get challenge from server
+        const { data: optData } = await axios.get('/api/v1/user/passkeys/register-options');
+
+        // 2. Ask authenticator to create credential
+        const attestation = await startRegistration({ optionsJSON: optData.options });
+
+        // 3. Send attestation to server
+        await axios.post('/api/v1/user/passkeys/register', {
+            challenge_token: optData.challenge_token,
+            name:            passkeyName.value || undefined,
+            credential:      attestation,
+        });
+
+        passkeyName.value    = '';
+        passkeySuccess.value = 'Passkey added successfully.';
+        await loadPasskeys();
+    } catch (e) {
+        if (e.name === 'NotAllowedError') {
+            passkeyError.value = 'Registration cancelled.';
+        } else {
+            passkeyError.value = e.response?.data?.message ?? e.message ?? 'Registration failed.';
+        }
+    } finally {
+        passkeyWorking.value = false;
+    }
+}
+
+async function removePasskey(id) {
+    if (!confirm('Remove this passkey?')) return;
+    try {
+        await axios.delete(`/api/v1/user/passkeys/${id}`);
+        await loadPasskeys();
+    } catch {
+        passkeyError.value = 'Failed to remove passkey.';
+    }
+}
+
+onMounted(loadPasskeys);
 
 async function deleteAccount() {
     if (!confirm('Permanently delete your account and ALL health data?\n\nThis action CANNOT be undone.')) return;
@@ -101,6 +165,57 @@ async function deleteAccount() {
         class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-sm font-semibold rounded-lg transition-colors">
         Download Data Export
       </button>
+    </div>
+
+    <!-- Passkeys -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+        <h2 class="font-semibold">Passkeys</h2>
+      </div>
+      <p class="text-sm text-zinc-500 mb-4">
+        Phishing-resistant biometric login — Touch ID, Face ID, Windows Hello, or a hardware key.
+      </p>
+
+      <div v-if="!webAuthnSupported" class="text-sm text-amber-400 bg-amber-400/10 rounded-lg px-3 py-2 mb-4">
+        Your browser does not support passkeys.
+      </div>
+
+      <template v-else>
+        <!-- Registered passkeys list -->
+        <div v-if="passkeys.length" class="space-y-2 mb-4">
+          <div v-for="pk in passkeys" :key="pk.id"
+            class="flex items-center justify-between bg-zinc-800 rounded-lg px-3 py-2.5">
+            <div>
+              <p class="text-sm font-medium">{{ pk.name }}</p>
+              <p class="text-xs text-zinc-500">
+                Added {{ new Date(pk.created_at).toLocaleDateString() }}
+                <span v-if="pk.last_used_at"> · Last used {{ new Date(pk.last_used_at).toLocaleDateString() }}</span>
+              </p>
+            </div>
+            <button @click="removePasskey(pk.id)"
+              class="text-xs text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded hover:bg-red-900/20">
+              Remove
+            </button>
+          </div>
+        </div>
+        <p v-else class="text-sm text-zinc-500 mb-4">No passkeys registered yet. Add one below to enable biometric login.</p>
+
+        <!-- Add passkey -->
+        <div class="flex gap-2">
+          <input v-model="passkeyName" type="text" placeholder="Name (e.g. MacBook Touch ID)"
+            class="input-field flex-1 text-sm" autocomplete="off" />
+          <button @click="addPasskey" :disabled="passkeyWorking"
+            class="px-4 py-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap">
+            {{ passkeyWorking ? 'Waiting…' : 'Add Passkey' }}
+          </button>
+        </div>
+
+        <div v-if="passkeySuccess" class="text-sm text-teal-400 bg-teal-400/10 rounded-lg px-3 py-2 mt-3">{{ passkeySuccess }}</div>
+        <div v-if="passkeyError"   class="text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2 mt-3">{{ passkeyError }}</div>
+      </template>
     </div>
 
     <!-- Danger zone -->

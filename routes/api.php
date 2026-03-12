@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\ActivityTypeController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\PasskeyController;
 use App\Http\Controllers\Api\V1\BatchImportController;
 use App\Http\Controllers\Api\V1\ExcretionLogController;
 use App\Http\Controllers\Api\V1\ImportController;
@@ -27,11 +28,21 @@ Route::prefix('v1')->group(function () {
     Route::post('/login',       [AuthController::class, 'login']);
     Route::post('/login/totp',  [AuthController::class, 'verifyTotp']);
 
+    // Passkey login (public — no prior auth required)
+    Route::get('/passkeys/challenge',       [PasskeyController::class, 'authenticationOptions']);
+    Route::post('/passkeys/authenticate',   [PasskeyController::class, 'authenticate']);
+
     // ── Protected ───────────────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
 
         // Auth
         Route::post('/logout',              [AuthController::class, 'logout']);
+
+        // Passkeys management (authenticated)
+        Route::get('/user/passkeys',                    [PasskeyController::class, 'index']);
+        Route::delete('/user/passkeys/{id}',            [PasskeyController::class, 'destroy']);
+        Route::get('/user/passkeys/register-options',   [PasskeyController::class, 'registrationOptions']);
+        Route::post('/user/passkeys/register',          [PasskeyController::class, 'register']);
         Route::get('/user',                 [AuthController::class, 'user']);
         Route::post('/user/totp/setup',     [AuthController::class, 'setupTotp']);
         Route::post('/user/totp/confirm',   [AuthController::class, 'confirmTotp']);
