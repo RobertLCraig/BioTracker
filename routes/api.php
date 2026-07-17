@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\V1\BatchImportController;
 use App\Http\Controllers\Api\V1\ExcretionLogController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\IntegrationController;
+use App\Http\Controllers\Api\V1\LabImportController;
+use App\Http\Controllers\Api\V1\LabPanelController;
+use App\Http\Controllers\Api\V1\LabResultController;
 use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\MedicationLogController;
 use App\Http\Controllers\Api\V1\PointController;
@@ -66,6 +69,14 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('medication-logs', MedicationLogController::class);
         Route::apiResource('symptom-logs',    SymptomLogController::class);
         Route::apiResource('vital-logs',      VitalLogController::class);
+
+        // ── Phase 6: Lab / Test Results ───────────────────────────────────────
+        // Specific routes before the apiResource so they aren't caught by {lab_result}.
+        Route::post('/lab-results/import',    [LabImportController::class, 'pkb']);
+        Route::get('/lab-results/trends',     [LabResultController::class, 'trends']);
+        Route::post('/lab-results/parse',     [LabResultController::class, 'parse']);
+        Route::apiResource('lab-results',     LabResultController::class);
+        Route::apiResource('lab-panels',      LabPanelController::class)->only(['index', 'show']);
 
         // ── Phase 3: Gamification ─────────────────────────────────────────────
         Route::get('/points',                 [PointController::class, 'index']);
