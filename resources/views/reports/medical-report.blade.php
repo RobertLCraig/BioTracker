@@ -55,6 +55,11 @@
         <td><strong>Total calories</strong></td>
         <td>{{ number_format($activityLogs->sum('calories')) }} kcal</td>
     </tr>
+    <tr>
+        <td><strong>Lab results</strong></td><td>{{ ($labResults ?? collect())->count() }}</td>
+        <td><strong>Out of range</strong></td>
+        <td>{{ ($labResults ?? collect())->filter(fn($r) => in_array($r->abnormal_flag?->value, ['high','low','critical_high','critical_low','abnormal']))->count() }}</td>
+    </tr>
 </table>
 
 {{-- Activity Logs --}}
@@ -99,6 +104,29 @@
             <td>{{ $log->unit }}</td>
             <td>{{ $log->source }}</td>
             <td>{{ $log->notes ?? '–' }}</td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+@endif
+
+{{-- Lab / Test Results --}}
+@if(($labResults ?? collect())->isNotEmpty() && (!$types || in_array('labs', $types)))
+<h2>Lab / Test Results</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Sample Date</th><th>Test</th><th>Value</th><th>Range</th><th>Flag</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($labResults as $r)
+        <tr>
+            <td>{{ $r->sampled_at?->format('d M Y') ?? '–' }}</td>
+            <td>{{ $r->test_name }}</td>
+            <td>{{ trim(($r->value_comparator ?? '') . ' ' . ($r->value_numeric ?? $r->value_text)) }} {{ $r->unit }}</td>
+            <td>{{ ($r->range_low !== null || $r->range_high !== null) ? ($r->range_low ?? '') . '–' . ($r->range_high ?? '') : ($r->range_text ?? '–') }}</td>
+            <td>{{ str_replace('_', ' ', ucfirst($r->abnormal_flag?->value ?? '')) }}</td>
         </tr>
         @endforeach
     </tbody>

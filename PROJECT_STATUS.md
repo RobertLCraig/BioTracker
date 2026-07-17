@@ -97,6 +97,35 @@ for future mobile app integration.
 
 ---
 
+## Phase 6 — Lab / Test Results (IN PROGRESS)
+
+Design: `docs/lab-results-design.md`. Stores blood/pathology results (analyte, value,
+unit, reference range, out-of-range flag, sample date) imported from NHS Patients Know Best.
+
+- [x] 6.1 Enums — `AbnormalFlag` (derived from value vs range), `LabResultStatus`
+- [x] 6.2 Migrations — `lab_test_definitions`, `lab_panels`, `lab_results`
+- [x] 6.3 Models — `LabTestDefinition` (catalog + resolver), `LabPanel` (inferred), `LabResult`
+      (trait + scope + encrypted comment; derives `test_key`/`abnormal_flag` on save)
+- [x] 6.4 `LabTestDefinitionSeeder` (~50 common UK analytes; lipid PKB ids known) + registered
+- [x] 6.5 `LabResultImporter` (shared persistence, panel upsert, dedup on `external_id`)
+      + `PkbTestImportService` (maps PKB `fetchTestHistoryJson` → rows, §2.5)
+- [x] 6.6 `ProcessLabImportJob` (queued large-file import)
+- [x] 6.7 Controllers/requests/resources — `LabResultController` (CRUD),
+      `LabPanelController` (read), `LabImportController` (`POST /lab-results/import`)
+- [x] 6.8 Routes under `/api/v1`
+- [x] 6.9 Feature tests — `LabResultImportTest` (7 tests: map/derive/infer, idempotency,
+      import endpoint, trends, paste parser, report, manual)
+- [x] 6.10 Paste-from-PKB parser (`LabResultParser`) + `POST /lab-results/parse` preview
+- [x] 6.11 Trends endpoint (`GET /lab-results/trends`) + lab section in `ReportExportService`
+      (CSV + PDF blade) + `labs` report type
+- [ ] 6.12 Verify with a full real capture (all analytes, not just the lipid sample)
+
+Verified end-to-end: importing the captured lipid sample creates 1 panel + 6 results,
+re-import is idempotent, out-of-range flags match the PKB UI, comments encrypt/decrypt,
+trends return numeric series, report renders a PDF with the lab section.
+
+---
+
 ## Key Architecture Decisions
 
 | Decision | Choice | Reason |

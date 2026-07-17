@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Models\ActivityLog;
 use App\Models\ExcretionLog;
+use App\Models\LabResult;
 use App\Models\MedicationLog;
 use App\Models\SymptomLog;
 use App\Models\User;
@@ -114,6 +115,26 @@ class ReportExportService
             $rows[] = [];
         }
 
+        // Lab results
+        if (! $types || in_array('labs', $types)) {
+            $rows[] = ['--- Lab / Test Results ---'];
+            $rows[] = ['Sample Date', 'Test', 'Value', 'Unit', 'Range Low', 'Range High', 'Flag', 'Status', 'Comment'];
+            foreach ($data['labResults'] as $r) {
+                $rows[] = [
+                    $r->sampled_at?->toIso8601String(),
+                    $r->test_name,
+                    trim(($r->value_comparator ?? '') . ($r->value_numeric ?? $r->value_text)),
+                    $r->unit,
+                    $r->range_low,
+                    $r->range_high,
+                    $r->abnormal_flag?->value,
+                    $r->status?->value,
+                    $r->comment,
+                ];
+            }
+            $rows[] = [];
+        }
+
         // Excretion logs
         if (! $types || in_array('excretion', $types)) {
             $rows[] = ['--- Excretion Logs ---'];
@@ -156,6 +177,7 @@ class ReportExportService
         $symptomLogs  = collect();
         $medicationLogs = collect();
         $excretionLogs  = collect();
+        $labResults     = collect();
 
         if (! $types || in_array('activity', $types)) {
             $activityLogs = ActivityLog::withoutGlobalScopes()
@@ -199,6 +221,14 @@ class ReportExportService
                 ->get();
         }
 
-        return compact('activityLogs', 'vitalLogs', 'symptomLogs', 'medicationLogs', 'excretionLogs');
+        if (! $types || in_array('labs', $types)) {
+            $labResults = LabResult::withoutGlobalScopes()
+                ->where('user_id', $user->id)
+                ->whereBetween('sampled_at', [$from->startOfDay(), $to->endOfDay()])
+                ->orderBy('sampled_at')
+                ->get();
+        }
+
+        return compact('activityLogs', 'vitalLogs', 'symptomLogs', 'medicationLogs', 'excretionLogs', 'labResults');
     }
 }

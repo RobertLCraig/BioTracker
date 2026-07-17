@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ActivityTypeSeeder::class,
             AchievementSeeder::class,
+            LabTestDefinitionSeeder::class,
         ]);
 
         User::firstOrCreate(

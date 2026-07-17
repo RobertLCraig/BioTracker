@@ -20,7 +20,7 @@ class ReportController extends Controller
      *   from    (date, required)
      *   to      (date, required)
      *   format  pdf|csv (default: pdf)
-     *   types[] activity|vitals|symptoms|medications|excretion (default: all)
+     *   types[] activity|vitals|symptoms|medications|excretion|labs (default: all)
      */
     public function export(Request $request): Response
     {
@@ -29,7 +29,7 @@ class ReportController extends Controller
             'to'      => 'required|date|after_or_equal:from',
             'format'  => 'nullable|in:pdf,csv',
             'types'   => 'nullable|array',
-            'types.*' => 'in:activity,vitals,symptoms,medications,excretion',
+            'types.*' => 'in:activity,vitals,symptoms,medications,excretion,labs',
         ]);
 
         $user   = $request->user();
