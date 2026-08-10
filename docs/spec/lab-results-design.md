@@ -112,7 +112,7 @@ Index: `(user_id, collected_at)`, unique `(user_id, client_id)`.
 | `external_id` | string | yes | PKB datapoint `id` (e.g. `3084750494`) — **natural dedup key** |
 | `test_name` | string | no | PKB `name` / `testResultTypeName` — as reported by the lab |
 | `test_code` | string | yes | PKB `testResultTypeId` + `testResultType` (LOINC mapping) |
-| `test_key` | string | no | `pkb_type_id` when present, else name-slug — trending/grouping key (§5) |
+| `test_key` | string | no | resolved definition `slug`, set at both ingest points; model falls back to `test_code` or a name-slug (§5) |
 | `value_text` | string | no | PKB `value.display` ("4.9 mmol/L", "Positive", ">60 mL/min") |
 | `value_numeric` | decimal(12,4) | yes | PKB `value.rawNumericValue` — for charts/flags |
 | `value_comparator` | string(3) | yes | PKB `value.comparator` — `<` / `>` (e.g. `>60`, `<10`) |
