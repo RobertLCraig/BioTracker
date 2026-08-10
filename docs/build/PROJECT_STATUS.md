@@ -1,8 +1,8 @@
 # BioTracker — Project Status
 
-Last updated: 2026-03-10T20:30:00Z
-Current phase: Phase 5 — Integrations (COMPLETE)
-Current step: ALL PHASES COMPLETE
+Last updated: 2026-08-10
+Current phase: Phase 6 — Lab / Test Results (built; awaiting a full-capture verification)
+Current step: see the board — the queue is `../board/todo/`, blockers are `../board/human-review/`
 
 ## Overview
 
@@ -118,7 +118,7 @@ unit, reference range, out-of-range flag, sample date) imported from NHS Patient
 - [x] 6.10 Paste-from-PKB parser (`LabResultParser`) + `POST /lab-results/parse` preview
 - [x] 6.11 Trends endpoint (`GET /lab-results/trends`) + lab section in `ReportExportService`
       (CSV + PDF blade) + `labs` report type
-- [ ] 6.12 Verify with a full real capture (all analytes, not just the lipid sample)
+- [ ] 6.12 Verify with a full real capture (all analytes, not just the lipid sample) — board card 0001
 
 Verified end-to-end: importing the captured lipid sample creates 1 panel + 6 results,
 re-import is idempotent, out-of-range flags match the PKB UI, comments encrypt/decrypt,
