@@ -4,8 +4,8 @@ Status: **design-spec** (no code yet)
 Author: design session 2026-07-17
 Scope: adds a new "Lab / Test Results" domain to BioTracker. Folds PRD + DATA-MODEL +
 DECISIONS for this one feature into a single doc, per the Project Doc Standard's
-small-scope allowance. When built, this becomes "Phase 6" in `PROJECT_STATUS.md` and its
-schema is promoted into the project `DATA-MODEL.md`.
+small-scope allowance. When built, this becomes "Phase 6" in `../build/PROJECT_STATUS.md` and its
+schema is promoted into the project `../DATA-MODEL.md`.
 
 ---
 
@@ -330,7 +330,7 @@ All under `auth:sanctum` + `EnsureTotpVerified`, like the rest of `/api/v1`.
    §2.5 shape; the primary path. Build against the captured `pkb-tests.json`.
 7. `LabResultParser` (paste) + `/parse` (preview) + `/import` (confirmed paste) — fallback.
 8. Trends endpoint via `AnalyticsService`; lab section in `ReportExportService`.
-9. Tests + `PROJECT_STATUS.md` Phase 6 entry + promote schema to `DATA-MODEL.md`.
+9. Tests + `../build/PROJECT_STATUS.md` Phase 6 entry + promote schema to `../DATA-MODEL.md`.
 
 ---
 
