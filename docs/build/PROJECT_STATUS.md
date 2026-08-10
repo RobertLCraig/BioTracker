@@ -99,7 +99,7 @@ for future mobile app integration.
 
 ## Phase 6 — Lab / Test Results (IN PROGRESS)
 
-Design: `docs/lab-results-design.md`. Stores blood/pathology results (analyte, value,
+Design: `../spec/lab-results-design.md`. Stores blood/pathology results (analyte, value,
 unit, reference range, out-of-range flag, sample date) imported from NHS Patients Know Best.
 
 - [x] 6.1 Enums — `AbnormalFlag` (derived from value vs range), `LabResultStatus`
