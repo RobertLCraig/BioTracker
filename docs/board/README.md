@@ -66,27 +66,76 @@ party owes you something, chasing them is your action: the card sits in `human-r
 
 ## The one section a card in `human-review/` must have
 
+`## What I need from you`, directly under the title. Lead with the action. Put the reasoning
+underneath, where it cannot stand between the reader and the ask.
+
+### The shape
+
+**The ask comes first: imperative, numbered, above everything else.** Somebody should know what they
+are being asked to do within three lines of opening the card. One ask is one line. Two asks are
+numbered. More than three asks is usually two cards.
+
+Underneath it, whichever of these the card actually needs:
+
+| Field | When |
+|---|---|
+| **Pass** | Always. What good looks like. Two or more conditions is a bulleted list, never one sentence joined by commas. |
+| **Fail** | Always. What bad looks like, and what to do when it happens. |
+| **Why it needs you** | Always. The part no lookup settles: a cost, a liability, a preference, a judgement. |
+| **What's wrong** | Defect cards. The symptom as the reader would see it, not the design behind it. |
+| **Cause** | Defect cards. The root cause, stated once. |
+
+### Worked example
+
 ```markdown
 ## What I need from you
-Which of the three, because it decides the storage shape and four cards are queued behind it.
-An agent cannot settle it: the options differ on cost and liability, not on evidence.
 
-<http://retireforecast.test/scenarios/43>
+**Two answers.**
+
+1. Can the loop keep committing unattended?  Yes / no.
+2. Should "not for the loop" be a card convention, or stay a scheduler flag?
+
+---
+
+**On 1.** It has run twice on its own, 0011 and 0015, and both passed. Nothing to
+run unless you want to watch one:
+
+    .\bin\work-card.ps1 -Limit 1
+
+Pass is all three of:
+- the card ends in `ai-review/`, or stays in `in-progress/` with its unmet
+  criteria still unticked
+- `git log` shows three commits and no others
+- the suite is green
+
+Fail is anything committed you would not have. Say so in this card. `git revert`
+undoes it cleanly, because each card and each move is its own commit.
+
+**On 2.** Two cards need skipping now. 0008 writes boards into twenty five other
+repos, and 0031 edits the script that would be running it. Nothing in the repo
+settles where that fact belongs, which is why it is yours.
 ```
 
-One or two sentences, directly under the title, saying **why this needs a person**: what it decides,
-what it blocks, and why an agent could not settle it from the docs, the standards and its own
-research.
+### How to write it
 
-**It has to be checkable, not merely short.** "Four clicks in a browser" is not an ask: it says how
-much work it is and not what the work is. Name the exact thing to do, what a pass looks like, and
-what a failure means. If there are several steps, number them and give each one its own expected
-result, so a failure points at one cause instead of at the whole card. The test is whether somebody
-could act on it without opening anything else. `## Why` was doing this job and doing it badly, because "why this card exists" and "why
-this card stopped" are different questions and only the second one is the reader's problem.
+**Checkable, not merely short.** "Four clicks in a browser" is not an ask: it says how much work it
+is, not what the work is. Name the exact thing to do and what a pass looks like. Numbered steps each
+get their own expected result, so a failure points at one step rather than at the whole card.
+
+**Write to the reader, not about them.** "Most of what waits for you", not "a large share of what
+waits on Rob". The card is addressed to a person, so address them.
+
+**One idea per sentence.** A sentence needing both a colon and a semicolon to hold itself together is
+a list. Make it a list.
+
+**Do not write for the quote.** "Ceremony carrying no information" is a good line and a bad
+instruction. The reader wants to know what to do, not to be persuaded that the card is clever.
 
 **If the answer is "look at it", give the link.** The board derives a project's local URL from its
 directory name, so a card that wants a page checked should name that page rather than describe it.
+
+`## Why` is not this section and must not be doing its job. "Why this card exists" and "why this card
+stopped and needs a person" are different questions, and only the second one is the reader's problem.
 
 A card in `human-review/` without this section is flagged as not ready, the same way a feature with
 no acceptance criteria is. Making the gap loud is the only enforcement there is.
