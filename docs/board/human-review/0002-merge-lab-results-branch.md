@@ -1,10 +1,23 @@
 # Merge feat/lab-results into master now, or hold for the full capture?
 
 ## What I need from you
-Pick one of the three options below. It decides whether master carries Phase 6 now, and whether
-any schema change falling out of 0001 arrives as a second migration on master or as more work on
-the branch. An agent cannot settle it: all three are safe, and the choice is about how you want
-master to read rather than about evidence.
+
+**Pick 1, 2 or 3 below.** It decides whether master carries Phase 6 now, and whether a schema
+change falling out of card 0001 arrives as a second migration on master or as more work on the
+branch.
+
+My recommendation is **2**: merge now, treat 0001's findings as follow-ups.
+
+**Pass** is a number in this card. The merge is then ordinary work, and nothing about it needs you
+a second time.
+
+**Fail** is holding without saying so. Option 1 is a real choice and the branch is safe to leave;
+what costs something is the branch ageing while nobody has decided it is waiting. Say "1" and it is
+waiting on purpose.
+
+**Why it needs you** All three are safe, so there is no evidence that settles it. The choice is
+about how you want master's history to read, and option 3 stops being available the moment anything
+is pushed.
 
 ## Why
 `feat/lab-results` is ahead of master by the Phase 6 commit plus the docs work, the suite is green

@@ -1,10 +1,10 @@
 # Verify the lab import against a full PKB capture
 
 ## What I need from you
-Run the PKB capture in your own browser session and drop the file where an agent can reach it. An
-agent cannot do this: it needs your logged-in NHS/PKB session, and PKB has no export button and no
-API we can authenticate against. Until it lands, Phase 6 is verified against six lipid results
-only, so nothing tells us how the importer behaves on the other analytes.
+
+**Capture your full test history from PKB and save it to `storage/app/private/pkb-tests.json`.**
+Four steps in your own browser session, below. Nothing else on this card can start until that file
+is on disk.
 
 1. Log in at <https://my.patientsknowbest.com>, open **Health → Tests**, click the **Trend** tab
    and set the date range to **All**.
@@ -20,6 +20,16 @@ only, so nothing tells us how the importer behaves on the other analytes.
 4. Save it as `storage/app/private/pkb-tests.json` in this repo and say so in the session. That
    path is gitignored (verified), so the results never reach git. Do not paste the contents into
    chat.
+
+**Pass** is that file on disk carrying more than the six lipids, with the analyte count said out
+loud so the import can be checked against it.
+
+**Fail** is named per step above. The one to watch is step 3: six results only means step 1's
+Trend/All did not apply, and importing that file would re-verify the field map against the same
+single panel it was written from, which is the thing this card exists to stop.
+
+**Why it needs you** It needs your logged-in PKB session. There is no export button and no API to
+authenticate against, so this is the one step of Phase 6 that no agent and no test can reach.
 
 ## Why
 Phase 6 shipped verified against a single captured lipid panel (1 panel, 6 results). The field map
