@@ -39,3 +39,6 @@ domains. Holding a finished, tested branch against a capture that needs your bro
 what turns a one-commit branch into a merge conflict.
 
 ## Decided
+
+
+**2026-08-16** Merge now, treat 0001's findings as follow-ups
