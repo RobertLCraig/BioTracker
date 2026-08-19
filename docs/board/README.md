@@ -65,6 +65,48 @@ refines it, that belongs in `## Plan` with the interim stated ("build to a named
 is one call site"), because a `needs:` that is not really a blocker makes a ready card look stuck,
 which is the same failure as a holding lane nobody owns.
 
+### `not_for_the_loop:` is decided by the EFFECT, not by the difficulty
+
+**Only code development and review run unattended** (Rob, 2026-08-20). If doing this card has an
+effect that leaves the repository, it needs a person driving the session, and the card must say so.
+
+Carry the key when the work involves any of:
+
+- changing DNS, or anything else about how a domain resolves
+- deploying, publishing or pushing anything to a live host
+- sending a message somebody receives: mail, a push notification, a post
+- creating, changing or paying for an account with a third party
+- `git push` on a repository that has not been through the credential scrub
+- anything a browser has to be driven through in order to confirm it
+
+The test is not "is this hard" or "would an agent get it right". It is **can this be undone by
+deleting a file.** A commit can. A sent email cannot, and a DNS record was serving traffic to real
+people while it was wrong.
+
+The value is the reason, in the reader's terms: `not_for_the_loop: publishes the site to Hostinger`.
+A card that edits the very script that would be running it carries the key for a different reason,
+and that is fine. The key means "not the unattended loop"; the value says why.
+
+**A card that needs a person also needs a starting point.** Whoever opens it is not handed the
+scaffolding the loop assembles for its own agent, so say in `## Plan` what an attended session
+should be told: which repository, what to check first, and what "it worked" looks like on a screen.
+A card nobody knows how to start is a card that does not get started.
+
+## Surface the whole chain of decisions, not the first link
+
+**An option that only raises three more questions has not been costed** (Rob, 2026-08-20). The
+reader answers, expects work to begin, and is asked again a day later. Two round trips is a card
+written from the writer's side of the problem rather than the reader's.
+
+So when an option would raise a further decision, say so on the option, in one clause: what would
+have to be settled next, and roughly what it turns on. Where the follow-up is small enough to be
+pre-empted, pre-empt it. Ask both questions on the one card, numbered, so a single answer settles
+the chain.
+
+This is not a licence to bundle unrelated questions. The test is whether answering question one
+makes question two inevitable. If it does, they are one decision presented in two parts and belong
+together. If it does not, they are two cards.
+
 ## Links: say what the relationship IS, never a bare card number
 
 **A card number dropped into a sentence is not a link, it is a puzzle.** `firecrm#0053` in the
