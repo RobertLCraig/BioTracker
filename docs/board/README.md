@@ -65,6 +65,70 @@ refines it, that belongs in `## Plan` with the interim stated ("build to a named
 is one call site"), because a `needs:` that is not really a blocker makes a ready card look stuck,
 which is the same failure as a holding lane nobody owns.
 
+## Links: say what the relationship IS, never a bare card number
+
+**A card number dropped into a sentence is not a link, it is a puzzle.** `firecrm#0053` in the
+middle of a paragraph tells the reader that some other card matters and nothing about why, so they
+open it to find out, and that is a page load spent on something one clause would have said. This is
+the commonest way a card wastes the reader's time while looking complete.
+
+So relationships go in a `## Links` section, under `## Why`, using the two relationship types every
+issue tracker settled on:
+
+```markdown
+## Links
+
+**Blocked by**
+- `0088` - the time-capture phasing has to be ratified before this can be scoped.
+
+**Relates to**
+- `firecrm#0053` - the same scrub rule stopped that repo getting a remote, and the
+  reasoning there applies here unchanged.
+```
+
+**One line each, and the line after the dash is the whole point.** It says why the reader is being
+sent there. A link with no reason should not have been written; nothing is lost by deleting it,
+because a card that genuinely matters can be described in a clause.
+
+**Only the outgoing half is written.** `Blocks` and `Referenced by` are the same edges read
+backwards, so the board derives and renders both, and a card that wrote them down would be keeping
+a second copy that goes stale the moment the other card moves. This is the same rule as `status:`:
+if the board can compute it, the card does not carry it.
+
+**`Blocked by` has to agree with `needs:`.** The frontmatter is the machine-readable half and this
+section is the human-readable half of one fact, so every number under `Blocked by` appears in
+`needs:` and every number in `needs:` appears here with its reason. A card that writes one and not
+the other has a blocker no view can show, or a reason no reader can find.
+
+## Is this actually a person's to decide?
+
+**Ask this before writing a decision card at all, because the scarcest thing on the board is the
+reader's attention and the cheapest thing on it is an agent's opinion.** A decision card spends a
+person; a card that did not need to exist spends them for nothing, and enough of those teach them to
+stop reading the ones that did.
+
+**A decision belongs to a person only when the answer turns on something no amount of reading can
+settle.** In practice that is four things and nothing else:
+
+| It is theirs when the answer turns on | Example |
+|---|---|
+| **A preference** | how much detail they want on a screen they will use every day |
+| **A cost they carry** | money, hours, a support burden, a thing that gets harder to undo |
+| **A risk or liability they own** | a benefits claim, a client relationship, data that must not leave the machine |
+| **Local knowledge nobody wrote down** | what a client actually meant, what happened before the repo existed |
+
+**If the answer is instead a matter of established practice, the agent researches it, applies it,
+and says on the card what it applied and where the practice came from.** Which HTTP status a
+validation failure returns, whether an id or a slug goes in a URL, how a table should be indexed,
+what a date format should be: these have correct answers that a search settles in minutes, and
+surfacing them as a decision is an agent asking a person to do its reading. **Say what you applied.**
+A choice made silently is one nobody can overturn, so it goes in `## Direction` or `## Plan` with the
+source, as a statement rather than a question.
+
+**When it is genuinely both, split it.** Research the standard part, apply it, and put only the
+residue in front of the person. "The industry default is X, applied. What I cannot settle is whether
+your situation is the exception, because Y" is one line of reading instead of a whole card.
+
 ## One lane for the human, not three
 
 A call to make, a build to accept, and an outside party to chase are the same state: nothing moves
@@ -204,21 +268,47 @@ in `todo/`. Not `done/`: an answer is almost always the start of work rather tha
 an agent picking it up can move it on if there is nothing to do. Direction is not an answer and
 moves nothing, because steering a card is something you do to work that is still yours to steer.
 
+## `## Why` is the PROBLEM, and it comes before any answer
+
+**Describe the problem before describing what might solve it.** The commonest fault on a real board
+is a card that opens with candidate answers - two approaches, their costs, a recommendation - and
+never once says what is actually wrong. The reader is then reverse-engineering the problem out of the
+proposed solutions, which is the hardest possible way to meet a card, and they cannot tell whether
+the options are the right options because they do not yet know what the options are FOR.
+
+So `## Why` answers three things, in this order, and stops:
+
+1. **What is wrong now.** The situation as somebody would hit it, in the real-world terms they would
+   hit it in. Not the design, not the fix.
+2. **What it costs.** Who is affected, how often, how much it hurts. This is what settles whether the
+   card is worth doing at all.
+3. **How it came to be this way**, in a sentence or two. "Nobody ever decided to leave email out, it
+   just never got ticked" is the line that makes a card land.
+
+**No solution appears in `## Why`.** The moment a fix is named there, everything after it is being
+judged against that fix rather than against the problem. Solutions live in `## Options` on a decision
+card and in `## Plan` on a feature card, and both read better when the section above them has
+established what they are trying to achieve.
+
+**The test, and it is a hard one:** cover everything below `## Why` and ask whether a reader who has
+never seen this card could now state the problem in their own words. If they could only state your
+proposed answer, the section is doing the wrong job.
+
 ## Two kinds of card, and the kind is derived
 
 A card with `## Options` is a **decision**. A card with `## Tasks` is a **feature**. Nothing
 declares its kind, because a declared kind is one more thing that can disagree with the card's own
 contents.
 
-**Decision:** `# title`, `## Why`, `## Options` (a **numbered** list, at least two, each with its cost),
-`## Recommendation`, `## Decided`. The recommendation is the point: a decision surfaced without one
-hands over the whole problem, while one that recommends has done the reading and leaves only the
-judgement.
+**Decision:** `# title`, `## Why`, an optional `## Links`, `## Options` (a **numbered** list, at least
+two, each with its cost), `## Recommendation`, `## Decided`. The recommendation is the point: a
+decision surfaced without one hands over the whole problem, while one that recommends has done the
+reading and leaves only the judgement.
 
-**Feature:** `# title`, `## Why`, `## Not this card`, `## Acceptance`, `## Tasks`, and an optional
-`## Plan` that is deleted when the card reaches `done/`. `## Not this card` is a scope fence the
-agent reads and obeys, and it is the cheapest defence against the commonest agent failure, which
-is quietly building three adjacent things.
+**Feature:** `# title`, `## Why`, an optional `## Links`, `## Not this card`, `## Acceptance`,
+`## Tasks`, and an optional `## Plan` that is deleted when the card reaches `done/`. `## Not this
+card` is a scope fence the agent reads and obeys, and it is the cheapest defence against the
+commonest agent failure, which is quietly building three adjacent things.
 
 Acceptance uses EARS phrasing (`WHEN <trigger>, THE APP SHALL <observable result>`) inside
 `<!-- AC:BEGIN -->` sentinels, so it stays greppable and interoperable with Backlog.md's
