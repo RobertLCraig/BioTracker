@@ -87,10 +87,9 @@ The value is the reason, in the reader's terms: `not_for_the_loop: publishes the
 A card that edits the very script that would be running it carries the key for a different reason,
 and that is fine. The key means "not the unattended loop"; the value says why.
 
-**A card that needs a person also needs a starting point.** Whoever opens it is not handed the
-scaffolding the loop assembles for its own agent, so say in `## Plan` what an attended session
-should be told: which repository, what to check first, and what "it worked" looks like on a screen.
-A card nobody knows how to start is a card that does not get started.
+**A card that needs a person also needs a starting point**, so its `## Plan` matters more than most.
+See `## Plan` is written for a stranger, below. A card nobody knows how to start is a card that does
+not get started.
 
 ## Surface the whole chain of decisions, not the first link
 
@@ -309,6 +308,32 @@ Recording an answer is the review, so the card leaves `human-review/` on the way
 in `todo/`. Not `done/`: an answer is almost always the start of work rather than the end of it, and
 an agent picking it up can move it on if there is nothing to do. Direction is not an answer and
 moves nothing, because steering a card is something you do to work that is still yours to steer.
+
+## `## Plan` is written for a stranger
+
+**Write it for a new session, with a new agent, holding no context at all** (Rob, 2026-08-20).
+Everything that session will ever know is the prompt it was handed, this card, and whatever the card
+links to. It was not in the conversation the card came out of, it has not read the other cards, and
+it cannot ask.
+
+So `## Plan` never says "as discussed", "the usual way", "the approach we agreed" or "see the
+earlier card". Each of those points at something the reader does not have, and a card whose first
+move is finding out what it meant has already spent the session's opening.
+
+Two rules follow, and both are cheap:
+
+- **Name the thing, then link it.** Not "follow the runbook" but "follow
+  [docs/DEPLOY.md](../../DEPLOY.md), section One-time setup". If what it depends on is not written
+  down anywhere, writing it down is part of this card.
+- **Say where to stand.** Which repository, which branch, what to run first, and what "it worked"
+  looks like on a screen. The unattended loop assembles all of that for its own agent and assembles
+  none of it for anybody else.
+
+**The test:** hand the card to somebody who has never seen this project and ask what they would type
+first. If the honest answer is "I would go and ask", the section is not finished.
+
+This is not care for its own sake. Every card here is worked by exactly one session that inherits
+nothing, attended or not, so a plan assuming context is wrong for every reader it will ever have.
 
 ## `## Why` is the PROBLEM, and it comes before any answer
 
