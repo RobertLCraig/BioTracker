@@ -21,6 +21,27 @@ is that somebody tried to break it first.
 **A decision card skips `ai-review/`.** There is no artefact to review; its exit is the decision
 itself, so it goes from `human-review/` straight to `done/`.
 
+### Where the card produced code, the adversarial pass includes security
+
+**Correctness and security find different things** (Rob, 2026-08-20). Code can pass every test, match
+the card's acceptance and still hand a stranger somebody else's data, so a review that only asks
+whether the code is right has done half the job. It also asks how the code is attacked.
+
+Three questions, and the answers go **on the card**, as a dated `## Direction` entry, before it leaves
+`ai-review/`:
+
+1. **Where is it weakest**, said the way somebody attacking it would use it, not as a category name.
+2. **What is unchecked** on any path in: unvalidated input, an entry point with no permission check,
+   a background job, a machine-facing interface. Not only the screen the card was about.
+3. **What does it leak** when it fails: another tenant's data, an internal id, a stack trace, or the
+   bare fact that a record exists.
+
+**A pass that found nothing still gets written down.** It says what was looked at and why it holds.
+"Looks fine" is not a review, because an unrecorded pass cannot be told apart from one that never
+happened, and the next reader has no way to know which they are looking at.
+
+A card that produced no code (a doc, a decision, a research pass) has nothing to attack and skips this.
+
 There is no `status:` field, because the folder already says it. A card carrying both would
 eventually disagree with itself, which is the failure this board exists to remove. There is no
 `created`, `updated` or `author` field either: git holds those, and a copy would drift.
@@ -322,9 +343,10 @@ move is finding out what it meant has already spent the session's opening.
 
 Two rules follow, and both are cheap:
 
-- **Name the thing, then link it.** Not "follow the runbook" but "follow
-  [docs/DEPLOY.md](../../DEPLOY.md), section One-time setup". If what it depends on is not written
-  down anywhere, writing it down is part of this card.
+- **Name the thing, then link it.** Not "follow the runbook" but
+  `follow [docs/DEPLOY.md](../../DEPLOY.md), section One-time setup`. If what it depends on is not
+  written down anywhere, writing it down is part of this card. (Shown as source, not as a live link:
+  a card sits one folder deeper than this README, so the same relative path would not resolve here.)
 - **Say where to stand.** Which repository, which branch, what to run first, and what "it worked"
   looks like on a screen. The unattended loop assembles all of that for its own agent and assembles
   none of it for anybody else.
@@ -380,6 +402,44 @@ commonest agent failure, which is quietly building three adjacent things.
 Acceptance uses EARS phrasing (`WHEN <trigger>, THE APP SHALL <observable result>`) inside
 `<!-- AC:BEGIN -->` sentinels, so it stays greppable and interoperable with Backlog.md's
 convention.
+
+### Every criterion names the test that proves it
+
+**A criterion ends with `proves:` and the name of the test that settles it, in backticks.**
+
+```
+<!-- AC:BEGIN -->
+- [ ] WHEN a named test did not run, THE APP SHALL refuse to promote the card. proves: `it refuses promotion when a named test did not run`
+- [ ] WHEN every named test ran and the suite is green, THE APP SHALL promote. proves: `it promotes when every named test ran`
+<!-- AC:END -->
+```
+
+The name is the test's own description, spelled exactly as the runner prints it. In Pest that is the
+`it(...)` string. Nothing is invented: run the suite once and copy the name it writes.
+
+**Why this rule exists.** A ticked box is a self-report. For sixteen unattended sessions the ledger
+recorded `ok: true` on every run, which only ever meant the process exited, and the acceptance boxes
+were ticked by the same agent that wrote the code. A green suite of 330 tests proves "I broke
+nothing"; it never proves "the thing asked for got built". Naming the test is what makes a criterion
+a check rather than a sentence.
+
+**It is enforced, not requested.** The build loop runs the suite with `--log-junit`, reads back the
+names of the tests that actually executed, and refuses to promote a card when a criterion names a
+test that did not run. That refusal is the whole point: an agent can tick a box, and it cannot make
+a test appear in a run log.
+
+**Write the test name before writing the code.** If the name cannot be written, the criterion is not
+yet observable and the card is not ready. That is the cheapest signal available that a criterion is
+really a wish.
+
+**What is allowed to carry no test, and it must say so:** `proves: manual` for anything only a
+person at a screen can settle (a browser check, a screenshot, "it looks right"), and `proves: none`
+where nothing here can test it, with the reason on the same line. Both are honest and both are
+counted. What is refused is a criterion that is silent about its proof, because that is the one that
+reads as tested and is not.
+
+A project with no suite the loop can find promotes as it always did, and the log says so in those
+words. This rule adds a check where a suite exists; it does not invent one where none does.
 
 ## Direction and Decided
 
