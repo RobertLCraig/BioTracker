@@ -4,6 +4,7 @@
 > continuing Phase 6, Lab / Test Results, on the `feat/lab-results` branch.
 
 **Stage:** active
+**Category:** app (guess)
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only;
 no SPA view for it yet, and the branch is unmerged.
 _Last updated: 2026-08-10 (docs consolidated under `docs/`, board scaffolded, five cards opened)_
