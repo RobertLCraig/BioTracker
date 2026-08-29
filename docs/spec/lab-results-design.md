@@ -2,10 +2,11 @@
 
 Status: **design-spec** (no code yet)
 Author: design session 2026-07-17
-Scope: adds a new "Lab / Test Results" domain to BioTracker. Folds PRD + DATA-MODEL +
-DECISIONS for this one feature into a single doc, per the Project Doc Standard's
-small-scope allowance. When built, this becomes "Phase 6" in `../build/PROJECT_STATUS.md` and its
-schema is promoted into the project `../DATA-MODEL.md`.
+Scope: adds a new "Lab / Test Results" domain to BioTracker. Built as "Phase 6" — see
+[`../build/PROJECT_STATUS.md`](../build/PROJECT_STATUS.md). Its schema now lives in
+[`../DATA-MODEL.md`](../DATA-MODEL.md) and its decisions in [`../DECISIONS.md`](../DECISIONS.md);
+this doc keeps the feature's own reasoning, the PKB field map (§2.5) and the capture procedure
+(§11).
 
 ---
 
@@ -49,7 +50,7 @@ So this is a new pair of tables, not a new `VitalType` case.
 
 ---
 
-## 2. Data model (canonical shape)
+## 2. Data model
 
 **Three tables** (decisions D1, D2 resolved — see §8):
 - `lab_test_definitions` — a **required** seeded catalog of known analytes (canonical name,
@@ -58,104 +59,18 @@ So this is a new pair of tables, not a new `VitalType` case.
   upserted from the `lab_order_id` + `collected_at` + `source` carried by incoming results.
 - `lab_results` — one analyte measurement. The atomic fact the user supplies.
 
-### `lab_test_definitions` — seeded analyte catalog (required, v1)
-Shared reference data (not user-owned — no `BelongsToUser`), seeded like `activity_types`.
-| Column | Type | Null | Notes |
-|--------|------|------|-------|
-| `id` | bigint PK | | |
-| `pkb_type_id` | string | yes | PKB `testResultTypeId` (e.g. `943400139`) — **the primary match key** |
-| `code_system` | string | yes | e.g. `loincMapping` (PKB `testResultType`) |
-| `code` | string | yes | LOINC / SNOMED code once mapped |
-| `name` | string | no | canonical analyte name, e.g. "Serum creatinine" |
-| `slug` | string | no | unique — fallback match key when no `pkb_type_id` |
-| `aliases` | json | yes | naming variants ("Creatinine", "Creat") — fallback matching |
-| `category` | string | yes | e.g. "Biochemistry", "Haematology", "Lipids" |
-| `default_unit` | string | yes | expected unit, e.g. "µmol/L" |
-| `default_range_low` | decimal(12,4) | yes | typical adult reference low (fallback only) |
-| `default_range_high` | decimal(12,4) | yes | typical adult reference high (fallback only) |
-| `is_curated` | boolean | no | `true` = seeded/reviewed; `false` = auto-created on import |
-| `timestamps` | | | |
+The three tables field by field — every column with its type, nullability and units, plus the
+`AbnormalFlag` and `LabResultStatus` enums and the rule that derives `abnormal_flag` — were
+promoted to [`../DATA-MODEL.md`](../DATA-MODEL.md) by board card 0004. That file is their one home
+now; what stays here is this feature's own reasoning.
 
-Index: unique `pkb_type_id`, unique `slug`. **Matching order:** (1) exact `pkb_type_id`
+### Matching an incoming analyte to a definition
+**Matching order:** (1) exact `pkb_type_id`
 from the JSON — reliable and unit-stable; (2) fallback to `slug`/`aliases` for manual/paste
 entries with no PKB id. **No lossy drop:** an unmatched analyte auto-creates a row
 (`is_curated = false`, `pkb_type_id` filled from the payload) so nothing is lost and the
 next import of the same analyte reuses it. The lab's *as-reported* name/unit/range still
 live on the result row — the catalog gives canonical grouping, it does not overwrite the lab.
-
-### `lab_panels` — one lab order / collection event (inferred)
-| Column | Type | Null | Notes |
-|--------|------|------|-------|
-| `id` | bigint PK | | |
-| `user_id` | FK users | no | `cascadeOnDelete`, `BelongsToUser` |
-| `name` | string | yes | panel name if known, e.g. "U&E", "Full Blood Count" |
-| `lab_order_id` | string | yes | PKB `labOrderId` (e.g. `0026A652481`) — the panel grouping key |
-| `collected_at` | timestamp | yes | PKB `date.value` — sample/collection date, used for trending |
-| `reported_at` | timestamp | yes | PKB `enteredDate.value` — when the lab released it |
-| `source` | string | no | `manual` \| `pkb_paste` \| `pkb_json` \| `file_import` (default `manual`) |
-| `performing_org` | string | yes | PKB `source.displayText` — lab / trust |
-| `source_via` | string | yes | PKB `source.via`, e.g. "Via Integration (HL7)" |
-| `lab_type` | string | yes | PKB `labType`, e.g. "BLS" |
-| `notes` | text | yes | **encrypted** (getter/setter like `VitalLog::notes`) |
-| `client_id` | string | yes | dedup key (see §4) = min PKB `id` of its results, or a synthesised hash |
-| `timestamps` | | | |
-
-Index: `(user_id, collected_at)`, unique `(user_id, client_id)`.
-
-### `lab_results` — one analyte measurement
-| Column | Type | Null | Notes |
-|--------|------|------|-------|
-| `id` | bigint PK | | |
-| `user_id` | FK users | no | denormalised for `UserOwnedScope` + direct queries |
-| `lab_panel_id` | FK lab_panels | yes | nullable so a standalone manual result needs no panel |
-| `test_definition_id` | FK lab_test_definitions | no | required (D2) — matched via `pkb_type_id`, else auto-created |
-| `external_id` | string | yes | PKB datapoint `id` (e.g. `3084750494`) — **natural dedup key** |
-| `test_name` | string | no | PKB `name` / `testResultTypeName` — as reported by the lab |
-| `test_code` | string | yes | PKB `testResultTypeId` + `testResultType` (LOINC mapping) |
-| `test_key` | string | no | resolved definition `slug`, set at both ingest points; model falls back to `test_code` or a name-slug (§5) |
-| `value_text` | string | no | PKB `value.display` ("4.9 mmol/L", "Positive", ">60 mL/min") |
-| `value_numeric` | decimal(12,4) | yes | PKB `value.rawNumericValue` — for charts/flags |
-| `value_comparator` | string(3) | yes | PKB `value.comparator` — `<` / `>` (e.g. `>60`, `<10`) |
-| `unit` | string | yes | PKB `unit` — "mmol/L", "µmol/L", "%", "10*9/L", "" … |
-| `range_low` | decimal(12,4) | yes | PKB `range.low` |
-| `range_high` | decimal(12,4) | yes | PKB `range.high` |
-| `range_text` | string | yes | PKB `range.textRange`, else `range.display` when non-numeric |
-| `abnormal_flag` | string(enum) | no | `AbnormalFlag` — **derived** (PKB sends no flag; see §5) — default `unknown` |
-| `status` | string(enum) | no | `LabResultStatus` — `deleted`/`replaceDate` → withdrawn/corrected; default `final` |
-| `textual_only` | boolean | no | PKB `textualResultsOnly` — text analytes (comments), excluded from trends |
-| `sampled_at` | timestamp | yes | PKB `date.value`; falls back to panel `collected_at` |
-| `released_at` | timestamp | yes | PKB `enteredDate.value` |
-| `available_from` | timestamp | yes | PKB `delayedDisplayDate` — embargoed-until date (pending results) |
-| `privacy_flags` | json | yes | PKB `privacyFlags` (generalHealth/mental/sexual/socialCare) |
-| `comment` | text | yes | **encrypted** — PKB `comment.comments` (HTML with `<br>`) |
-| `timestamps` | | | |
-
-Index: `(user_id, test_key, sampled_at)`, `(lab_panel_id)`.
-
-### Enums (`app/Enums/`)
-```php
-enum AbnormalFlag: string {
-    case Normal = 'normal';           // HL7 N
-    case High = 'high';               // H
-    case Low = 'low';                 // L
-    case CriticalHigh = 'critical_high'; // HH
-    case CriticalLow = 'critical_low';   // LL
-    case Abnormal = 'abnormal';       // A (non-numeric abnormal)
-    case Unknown = 'unknown';         // not supplied
-}
-
-enum LabResultStatus: string {
-    case Preliminary = 'preliminary';
-    case Final = 'final';
-    case Corrected = 'corrected';     // PKB "Corrected"
-    case Withdrawn = 'withdrawn';     // PKB "withdrawn by … on …"
-}
-```
-
-`abnormal_flag` is **always derived** — PKB sends no flag (the portal computes "out of
-range" client-side). Rule: `value_numeric < range_low → low`, `> range_high → high`, within
-→ `normal`, no numeric value or no range → `unknown`. (Kept as a stored enum, not a pure
-accessor, so manual entries can still carry an explicit flag if a future source provides one.)
 
 ### 2.5 PKB JSON → BioTracker field map (canonical)
 Source: `GET /test/nodecorate_fetchTestHistoryJson.action?...&testResultTypeId={id}`.
@@ -186,7 +101,7 @@ grouped by `dataPoints[].labOrderId`.
 | `dataPoints[].privacyFlags` | → | `privacy_flags` (json) | |
 | `dataPoints[].delayedDisplayDate` | → | `available_from` | embargoed-until |
 | `dataPoints[].deleted` / `.replaceDate` | → | `status` | → `withdrawn` / `corrected` |
-| *(none — derived)* | → | `abnormal_flag` | value vs range, see above |
+| *(none — derived)* | → | `abnormal_flag` | value vs range, see [`../DATA-MODEL.md`](../DATA-MODEL.md) |
 
 Worked row — from the captured Serum HDL cholesterol datapoint:
 `id 3084750495`, `labOrderId 0026A652481`, `date 17 Jul 2026`, `value 0.8 mmol/L`,
@@ -293,27 +208,16 @@ All under `auth:sanctum` + `EnsureTotpVerified`, like the rest of `/api/v1`.
 
 ## 8. Decisions (resolved 2026-07-17)
 
-- **D1 — Two tables, panel inferred. ✅** `lab_panels` + `lab_results` (plus the catalog,
-  D2). The **panel is inferred**, not entered: on import it is upserted from the
-  `lab_order_id` + `collected_at` + `source` carried by the incoming result rows. Results
-  sharing an order id attach to one panel; a lone manual result with no order id has
-  `lab_panel_id = null`. The user only ever supplies *results*.
+D1 to D4, each with the reasoning behind it, were promoted to
+[`../DECISIONS.md`](../DECISIONS.md) by board card 0004 and live there now:
 
-- **D2 — Analyte catalog required for v1. ✅** Added `lab_test_definitions` (§2), seeded like
-  `activity_types`. Every result links via `test_definition_id`. Unmatched analytes
-  auto-create an `is_curated = false` definition (non-lossy) for later curation. The lab's
-  as-reported name/unit/range stay on the result row; the catalog only supplies canonical
-  grouping.
-
-- **D3 — Source found: PKB's `fetchTestHistoryJson` XHR. ✅ (updated)** PKB has no export
-  button and no data in its page HTML, **but** the Tests page fetches clean, LOINC-mapped,
-  range-structured JSON from `nodecorate_fetchTestHistoryJson.action`. A real sample was
-  captured 2026-07-17; the field map is §2.5 and the **repeatable capture procedure is §11**.
-  This is now the **primary v1 import path**, not a deferred one. Manual + paste remain as
-  fallbacks. A true file export (FHIR/CSV) and PDF are still deferred — unneeded now.
-
-- **D4 — Paste is best-effort. ✅** Preview-then-confirm, never a guaranteed parser, because
-  PKB serves results via JS/API rather than in page HTML.
+- **D1 ✅** — two tables, and the panel is inferred rather than entered.
+- **D2 ✅** — the analyte catalog is required for v1, and an unmatched analyte auto-creates an
+  uncurated row rather than being dropped.
+- **D3 ✅** — PKB's `fetchTestHistoryJson` XHR is the primary import path (field map §2.5,
+  repeatable capture procedure §11). Manual and paste remain fallbacks; a FHIR/CSV export and
+  PDF parsing stay deferred.
+- **D4 ✅** — paste is best-effort: preview, then confirm.
 
 ---
 

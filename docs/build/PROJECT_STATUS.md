@@ -128,16 +128,9 @@ trends return numeric series, report renders a PDF with the lab section.
 
 ## Key Architecture Decisions
 
-| Decision | Choice | Reason |
-|----------|--------|--------|
-| Auth | Sanctum tokens | API-first, mobile-ready |
-| MFA | TOTP via Google2FA | Standard TOTP, recovery codes |
-| Encryption | Laravel `Crypt` facade | Field-level AES-256 for health data |
-| Data isolation | `UserOwnedScope` global scope | Zero-trust per-user filtering |
-| Media | Spatie MediaLibrary | Photo uploads for logs |
-| PDF | DomPDF | Medical report export |
-| DB (dev) | SQLite | Simple local dev setup |
-| Queue (dev) | sync | No queue daemon needed locally |
+Promoted to [`../DECISIONS.md`](../DECISIONS.md) by board card 0004 and kept there now: Sanctum
+tokens, TOTP via Google2FA, `Crypt` field encryption, the `UserOwnedScope` global scope, Spatie
+MediaLibrary, DomPDF, and SQLite plus the `sync` queue in development — each with its reason.
 
 ---
 

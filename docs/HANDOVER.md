@@ -8,30 +8,22 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 The SPA view exists on `card/0003` (built, suite green, never seen in a browser) and the branch is
 unmerged.
-_Last updated: 2026-08-29 (card 0003 built the SPA Lab Results view)_
+_Last updated: 2026-08-29 (card 0004 created the PRD, data model, decisions log and root
+`CLAUDE.md`)_
 
 ## Goal & success criteria
-**Gap: there is no `docs/PRD.md`.** Card 0004 owes it, and the summary below is the interim, not
-the source of truth. The nearest thing to a spec is `README.md` (feature list, API reference) plus
-[spec/lab-results-design.md](spec/lab-results-design.md) §1 for Phase 6 specifically.
-
-Interim goal: one private place to record everything a person tracks about their own health
-(food, activity, excretion, medications, symptoms, vitals, and now lab results), API-first so a
-mobile client can use the same endpoints, with the data kept private and portable.
-
-Interim success criteria, all currently met: every write is isolated per user by a global scope,
-free-text health fields are encrypted at rest, sensitive actions are audit-logged, a user can
-export everything as JSON or a PDF/CSV report and delete their account, and imports are
-idempotent so re-running one changes nothing.
+The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
 
 ## Canonical data shape
-**Gap: there is no `docs/DATA-MODEL.md`.** Today the shape lives in two places, which is one too
-many: the lab domain is fully specified in [spec/lab-results-design.md](spec/lab-results-design.md)
-§2 (three tables, field by field, with types, nullability and units) and §2.5 (the PKB JSON to
-column map, the single reference for the importer). Every other domain has no written model at
-all; its shape is only in `database/migrations/`. Card 0004 promotes both into `DATA-MODEL.md`.
+The canonical shape is [DATA-MODEL.md](DATA-MODEL.md): the three lab tables and the seven log
+tables, field by field, plus the enums, the dedup keys, and the list of places a layer currently
+diverges from it. The PKB JSON to column map stays in
+[spec/lab-results-design.md](spec/lab-results-design.md) §2.5, which is the importer's own
+reference. The supporting tables (gamification, analytics, integrations, auth) are still
+undocumented — their shape is only in `database/migrations/`, and that gap is named in
+`DATA-MODEL.md`.
 
-The lab shape in one paragraph, so a session need not open the design doc to orient:
+The lab shape in one paragraph, so a session need not open either doc to orient:
 `lab_test_definitions` is a shared, seeded analyte catalog (53 rows, not user-owned) that gives
 canonical naming and grouping; `lab_panels` is one lab order, never entered by hand but inferred
 and upserted from the `lab_order_id` carried by incoming results; `lab_results` is the atomic
@@ -41,16 +33,11 @@ definition's `slug` and is what makes an analyte trend as one series across manu
 entries. `abnormal_flag` is always **derived** from value against range, because PKB sends no flag
 (its portal computes it client-side).
 
-Where the layers currently diverge from this shape, each one a bug to close rather than a state
-to preserve:
-- **`aliases` is designed and dead.** §2 makes it a fallback match key; the column exists and is
-  cast, but `LabTestDefinition::resolveForImport()` matches on `slug` only and the seeder writes
-  no aliases. Card 0005.
-- **Only 6 of 53 seeded definitions carry a `pkb_type_id`** (the lipids captured 2026-07-17). The
-  other 47 rely on their name slugging identically to PKB's. The resolver does backfill the id
-  onto a seeded row on first import, so this self-heals for every analyte whose name matches.
-- **The importer class is named `PkbTestImportService`**, not `PkbTestJsonImporter` as the design
-  doc §3a and §9 call it. The code is right; the doc's name is stale.
+Three known divergences from that shape are open, each a bug to close rather than a state to
+preserve: the dead `aliases` fallback (card 0005), only 6 of the 53 seeded definitions carrying a
+`pkb_type_id`, and the design doc still calling the importer `PkbTestJsonImporter` when the class
+is `PkbTestImportService`. Each is written up in
+[DATA-MODEL.md](DATA-MODEL.md#known-divergences-to-close).
 
 ## Architecture / stack
 Laravel 12 on PHP 8.2+ (Herd), SQLite in dev, queue driver `sync` in dev. API-first: every feature
@@ -86,14 +73,11 @@ and pass through `LabResultImporter`, so dedup, validation and audit live in exa
 dedup is on `external_id` (the PKB datapoint id, or a synthesised sha1 for manual/paste entries);
 and the route ordering note above is a real trap, not a style preference.
 
-## Decisions locked
-Feature decisions D1 to D4, each with its reasoning, are in
-[spec/lab-results-design.md](spec/lab-results-design.md) §8: the panel is inferred rather than
-entered, the analyte catalog is required, PKB's `fetchTestHistoryJson` XHR is the primary import
-path (§11 holds the repeatable capture procedure), and paste is best-effort preview-then-confirm.
-The project-wide choices (Sanctum, TOTP, `Crypt` field encryption, `UserOwnedScope`, DomPDF,
-SQLite and `sync` in dev) are tabled in [build/PROJECT_STATUS.md](build/PROJECT_STATUS.md).
-Both move into `docs/DECISIONS.md` under card 0004.
+Every decision and its reasoning is in [DECISIONS.md](DECISIONS.md), newest first: the feature
+decisions D1 to D4 (the panel is inferred rather than entered, the analyte catalog is required,
+PKB's `fetchTestHistoryJson` XHR is the primary import path, paste is best-effort
+preview-then-confirm) and the project-wide choices (Sanctum, TOTP, `Crypt` field encryption,
+`UserOwnedScope`, MediaLibrary, DomPDF, SQLite and `sync` in dev).
 
 Locked this session: the doc set follows the canonical `docs/` layout with `spec/` and `build/`,
 and work now lives on the board rather than in prose.
@@ -116,8 +100,8 @@ and work now lives on the board rather than in prose.
 
 ## What's next (in order)
 The queue is [board/todo/](board/todo/), one card per file. At its head:
-1. **0004** create the missing doc anchors and promote the lab schema into `DATA-MODEL.md`.
-2. **0005** alias matching, which closes the one live divergence in the data shape.
+1. **0005** alias matching, which closes the one live divergence in the data shape.
+2. **0006** rewrite this board's cards for the reader.
 
 Card 0003 (the SPA Lab Results view) is built and its acceptance is ticked, but it has never been
 opened in a browser — Herd serves the SPA from `C:\Dev\BioTracker`, not from the worktree it was
@@ -150,7 +134,6 @@ Sign in with the seeded demo account named in `README.md`.
 ## Suggested skills / next tools
 - `/handover resume` to start the next session: it reads this doc and the board, then picks up the
   head card without re-planning.
-- `/scaffold-docs` is card 0004's whole first task.
 - `/run` when the SPA work in 0003 needs to be seen working rather than just tested.
 - `/code-review` before 0002 is answered, since nothing in Phase 6 has had an adversarial pass.
 - `/checkpoint` to update the docs and commit mid-session without a full handover.
@@ -160,11 +143,14 @@ Sign in with the seeded demo account named in `README.md`.
 ## Sibling docs
 | Doc | Purpose |
 |-----|---------|
-| [spec/lab-results-design.md](spec/lab-results-design.md) | Phase 6 design: data shape §2, PKB field map §2.5, decisions §8, and the repeatable capture procedure §11 |
-| [build/PROJECT_STATUS.md](build/PROJECT_STATUS.md) | Phase 1 to 6 delivery checklist and the architecture choices table |
+| [PRD.md](PRD.md) | Goal, success criteria, scope, non-goals, and the gaps that were never agreed |
+| [DATA-MODEL.md](DATA-MODEL.md) | The canonical data shape: lab + log tables field by field, enums, dedup keys, open divergences |
+| [DECISIONS.md](DECISIONS.md) | Every decision with its reason, newest first |
+| [spec/lab-results-design.md](spec/lab-results-design.md) | Phase 6 design: why three tables, analyte matching, the PKB field map §2.5, and the repeatable capture procedure §11 |
+| [build/PROJECT_STATUS.md](build/PROJECT_STATUS.md) | Phase 1 to 6 delivery checklist |
 | [board/README.md](board/README.md) | The board convention (owned by the `/handover` skill, never edited here) |
 | `README.md` (repo root) | Setup, demo account, full API reference |
-| `docs/PRD.md`, `docs/DATA-MODEL.md`, `docs/DECISIONS.md`, root `CLAUDE.md` | **Missing.** Card 0004 |
+| `CLAUDE.md` (repo root) | The orient tripwire a fresh session hits first, plus the build/test commands |
 
 ## Branch status
 On `feat/lab-results`, two commits ahead of `master` (Phase 6, plus this session's docs
@@ -174,4 +160,4 @@ branch tracking `origin`. Merging is card 0002.
 ## Session log
 No prose log here by design. The narrative is the commit history, and the commit messages are
 written to be read: `git log --format='%ad %s%n%b' --date=short`. Rationale belongs in
-`docs/DECISIONS.md` once card 0004 creates it.
+[DECISIONS.md](DECISIONS.md).

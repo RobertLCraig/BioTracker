@@ -136,6 +136,20 @@ All endpoints are prefixed with `/api/v1/`. Protected routes require `Authorizat
 | GET/POST/PUT/DELETE | `/vital-logs`    | Vital signs CRUD   |
 | POST   | `/vital-logs/batch`        | Bulk import              |
 
+### Lab / Test Results
+| Method | Endpoint                    | Description              |
+|--------|-----------------------------|--------------------------|
+| GET    | `/lab-results`              | List results; filters: `test_key`, `from`, `to`, `abnormal`, `panel`, `source` |
+| POST   | `/lab-results`              | Manual create (optional inline panel fields) |
+| GET    | `/lab-results/{id}`         | Show one result          |
+| PUT    | `/lab-results/{id}`         | Update a result          |
+| DELETE | `/lab-results/{id}`         | Delete a result          |
+| GET    | `/lab-results/trends`       | Numeric series for one `test_key`; with none, the list of available series |
+| GET    | `/lab-panels`               | List orders/panels with nested results |
+| GET    | `/lab-panels/{id}`          | One panel + its results  |
+| POST   | `/lab-results/parse`        | Paste from PKB → parsed preview, never writes |
+| POST   | `/lab-results/import`       | PKB JSON upload or confirmed paste → queued import |
+
 ### Gamification
 | Method | Endpoint                    | Description              |
 |--------|-----------------------------|--------------------------|
