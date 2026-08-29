@@ -34,7 +34,7 @@ rows. Results link to it so the same analyte trends as one series whatever the l
 | `code` | string | yes | LOINC / SNOMED code once mapped |
 | `name` | string | no | canonical analyte name, e.g. "Serum creatinine" |
 | `slug` | string | no | unique — fallback match key, and the value of `lab_results.test_key` |
-| `aliases` | json | yes | naming variants ("Creatinine", "Creat") — designed as a fallback match key, **not yet used** (see divergences) |
+| `aliases` | json | yes | naming variants ("Creatinine", "Creat") — matched on their slug when the incoming name matches no `slug`. Seeded on 50 of the 53 rows |
 | `category` | string | yes | e.g. "Biochemistry", "Haematology", "Lipids" |
 | `default_unit` | string | yes | expected unit, e.g. "µmol/L" |
 | `default_range_low` | decimal(12,4) | yes | typical adult reference low (fallback only) |
@@ -272,9 +272,11 @@ The PKB JSON → column map is [spec/lab-results-design.md](spec/lab-results-des
 
 ## Known divergences (to close)
 
-- **`aliases` is designed and dead.** The column exists and is cast, but
-  `LabTestDefinition::resolveForImport()` matches on `pkb_type_id` and `slug` only, and the seeder
-  writes no aliases. Board card 0005.
+- ~~**`aliases` is designed and dead.**~~ Closed by card 0005: `resolveForImport()` falls back to
+  an alias lookup between the slug match and the auto-create, matching slug against slug so case,
+  spacing and punctuation do not matter, and the seeder writes aliases on 50 of the 53 rows. What
+  remains is curation, not divergence — the seeded variants are the ordinary UK pathology
+  spellings, not a list checked against a real capture. Card 0001 supplies that.
 - **Only 6 of the 53 seeded definitions carry a `pkb_type_id`** — the lipids captured 2026-07-17.
   The other 47 rely on their name slugging identically to PKB's. The resolver backfills the id onto
   a seeded row on first import, so this self-heals for every analyte whose name matches.

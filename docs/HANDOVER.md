@@ -8,8 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-08-29 (card 0004 created the PRD, data model, decisions log and root
-`CLAUDE.md`)_
+_Last updated: 2026-08-29 (card 0005 gave the analyte matcher its alias fallback)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -33,11 +32,12 @@ definition's `slug` and is what makes an analyte trend as one series across manu
 entries. `abnormal_flag` is always **derived** from value against range, because PKB sends no flag
 (its portal computes it client-side).
 
-Three known divergences from that shape are open, each a bug to close rather than a state to
-preserve: the dead `aliases` fallback (card 0005), only 6 of the 53 seeded definitions carrying a
-`pkb_type_id`, and the design doc still calling the importer `PkbTestJsonImporter` when the class
-is `PkbTestImportService`. Each is written up in
-[DATA-MODEL.md](DATA-MODEL.md#known-divergences-to-close).
+Two known divergences from that shape are still open, each a bug to close rather than a state to
+preserve: only 6 of the 53 seeded definitions carry a `pkb_type_id`, and the design doc still calls
+the importer `PkbTestJsonImporter` when the class is `PkbTestImportService`. Both are written up in
+[DATA-MODEL.md](DATA-MODEL.md#known-divergences-to-close). The third, the dead `aliases` fallback,
+is closed: card 0005 gave `resolveForImport()` an alias lookup between the slug match and the
+auto-create, and seeded aliases on 50 of the 53 rows.
 
 ## Architecture / stack
 Laravel 12 on PHP 8.2+ (Herd), SQLite in dev, queue driver `sync` in dev. API-first: every feature
@@ -88,20 +88,21 @@ and work now lives on the board rather than in prose.
   and batch import). Phase 6 is on `master` too: three tables, three models, the
   matcher, the seeder, the PKB JSON importer, the queued import job, manual CRUD, the paste
   parser and its preview endpoint, the trends endpoint, a lab section in the CSV and PDF report,
-  the SPA view, and its feature tests. The whole suite is green (10 passing). It has been
+  the SPA view, and its feature tests. The whole suite is green (15 passing). It has been
   verified end to end against one real captured lipid panel: 1 panel and 6 results created, re-import idempotent,
   out-of-range flags matching the portal, comments encrypting and decrypting, trends returning a
   numeric series, the PDF rendering its lab section.
 - **In progress:** nothing half-built. The tree is clean and the branch is coherent.
-- **Known bugs / broken:** none open. The known shortfalls are scope rather than defects: the dead
-  `aliases` fallback (card 0005), the demo seeder writing no lab data so `/labs` on the demo
-  account only ever shows its empty state, and the labs list stopping at the API's 50-row page
-  (it says so on screen, but does not page).
+- **Known bugs / broken:** none open. The known shortfalls are scope rather than defects: the demo
+  seeder writing no lab data so `/labs` on the demo account only ever shows its empty state, and
+  the labs list stopping at the API's 50-row page (it says so on screen, but does not page).
 
 ## What's next (in order)
-The queue is [board/todo/](board/todo/), one card per file. At its head:
-1. **0005** alias matching, which closes the one live divergence in the data shape.
-2. **0006** rewrite this board's cards for the reader.
+Card **0005** (alias matching) is built on branch `card/0005` with all five criteria met and the
+suite green; it is waiting on the scheduler's merge and review, not on more work. After it:
+1. **0006** rewrite this board's cards for the reader.
+
+The queue is [board/todo/](board/todo/), one card per file.
 
 Card 0003 (the SPA Lab Results view) is built and its acceptance is ticked, but it has never been
 opened in a browser — Herd serves the SPA from `C:\Dev\BioTracker`, not from the worktree it was
@@ -124,7 +125,7 @@ Neither of the two blocks 0005 or 0006, so a session with no answer to hand stil
 # PHP is not on PATH; Herd's is the one the tests were run with
 PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 
-"$PHP" artisan test                      # expect: 10 passed (60 assertions)
+"$PHP" artisan test                      # expect: 15 passed (75 assertions)
 "$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 53 analytes
 "$PHP" artisan route:list --path=lab     # expect: the 5 lab route groups from routes/api.php
 

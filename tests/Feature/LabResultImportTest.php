@@ -261,4 +261,77 @@ class LabResultImportTest extends TestCase
         $this->assertNull($result->lab_panel_id);            // standalone manual result → no panel
         $this->assertSame('serum-cholesterol', $result->test_key);
     }
+
+    /** A name that matches no slug but does match an alias resolves, case and spacing aside. */
+    public function test_alias_resolves_without_creating_a_second_definition(): void
+    {
+        $before = LabTestDefinition::count();
+        $hb = LabTestDefinition::where('slug', 'hb')->sole();
+
+        foreach (['Haemoglobin estimation', '  haemoglobin   ESTIMATION  '] as $name) {
+            $this->assertSame($hb->id, LabTestDefinition::resolveForImport(null, null, $name)->id);
+        }
+
+        $this->assertSame($before, LabTestDefinition::count());
+    }
+
+    /** An alias match backfills the PKB id the same way a slug match does. */
+    public function test_alias_match_backfills_the_pkb_type_id(): void
+    {
+        $creatinine = LabTestDefinition::where('slug', 'serum-creatinine')->sole();
+        $this->assertNull($creatinine->pkb_type_id);
+
+        $resolved = LabTestDefinition::resolveForImport('943400999', 'loincMapping', 'Creatinine', 'umol/L');
+
+        $this->assertSame($creatinine->id, $resolved->id);
+        $this->assertSame('943400999', $resolved->fresh()->pkb_type_id);
+        $this->assertSame('loincMapping', $resolved->fresh()->code_system);
+    }
+
+    /** No id, no slug, no alias → still recorded, as an uncurated definition. */
+    public function test_unmatched_analyte_still_creates_an_uncurated_definition(): void
+    {
+        $before = LabTestDefinition::count();
+
+        $created = LabTestDefinition::resolveForImport(null, null, 'Serum unobtainium', 'nmol/L');
+
+        $this->assertSame($before + 1, LabTestDefinition::count());
+        $this->assertFalse($created->is_curated);
+        $this->assertSame('serum-unobtainium', $created->slug);
+    }
+
+    /** AC#5: a manual entry named by alias trends as one series with the PKB import. */
+    public function test_manual_entry_named_by_alias_shares_the_import_test_key(): void
+    {
+        $user = User::factory()->create();
+        app(PkbTestImportService::class)->import($user, $this->pkbPayload());
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/lab-results', [
+            'test_name' => 'Cholesterol',            // an alias of "Serum cholesterol"
+            'value_text' => '5.2',
+            'value_numeric' => 5.2,
+            'unit' => 'mmol/L',
+            'sampled_at' => '2026-08-01T09:00:00Z',
+        ])->assertCreated()->assertJsonPath('test_key', 'serum-cholesterol');
+
+        $keys = LabResult::withoutGlobalScopes()
+            ->where('user_id', $user->id)
+            ->whereIn('test_name', ['Cholesterol', 'Serum cholesterol'])
+            ->pluck('test_key');
+
+        $this->assertCount(2, $keys);
+        $this->assertSame(['serum-cholesterol'], $keys->unique()->values()->all());
+    }
+
+    /** Two definitions claiming one alias would make resolution order-dependent. */
+    public function test_seeded_aliases_are_unique_across_the_catalog(): void
+    {
+        $slugs = LabTestDefinition::all()
+            ->flatMap(fn (LabTestDefinition $d) => collect($d->aliases ?? [])
+                ->map(fn ($alias) => \Illuminate\Support\Str::slug($alias))
+                ->push($d->slug))
+            ->all();
+
+        $this->assertSame(array_unique($slugs), $slugs, 'A seeded alias collides with another alias or slug.');
+    }
 }
