@@ -21,8 +21,16 @@ is pushed.
 
 ## Why
 `feat/lab-results` is ahead of master by the Phase 6 commit plus the docs work, the suite is green
-(9 passed), and nothing is pushed. Master has no lab results at all. 0001 could produce mapping or
-schema changes, so the branch either waits for it or does not.
+(9 passed), and nothing is pushed. Master has no lab results at all. Card 0001 could produce
+mapping or schema changes, so the branch either waits for it or does not.
+
+## Links
+
+**Relates to**
+- `0001` - the full PKB capture, and the whole reason this is a question. It is the thing that
+  could still change the lab schema, so it decides whether waiting buys anything. It is not a
+  blocker: every option below is safe to take before it lands, which is why this card carries no
+  `needs:`.
 
 ## Options
 1. **Hold until 0001 verifies.** Cost: master stays without Phase 6 until the PKB capture happens,

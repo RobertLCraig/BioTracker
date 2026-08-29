@@ -11,13 +11,20 @@ it does not match, a second uncurated definition is created and that analyte's h
 across two `test_key`s, which is exactly what the catalog was added to prevent. It is a divergence
 between the documented data shape and the code, not a preference.
 
+## Links
+
+**Relates to**
+- `0001` - the full PKB capture. It is the only source of the real analyte names this catalog is
+  guessing at, so it refines which aliases are worth seeding. It is an influence and not a
+  blocker, which is why this card carries no `needs:`.
+
 ## Not this card
 Not changing the match order itself, not curating the whole catalog against the full capture
-(that follows 0001), and not backfilling `pkb_type_id` by hand: the resolver already backfills it
-onto a seeded row the first time an analyte arrives with an id.
+(that follows card 0001), and not backfilling `pkb_type_id` by hand: the resolver already backfills
+it onto a seeded row the first time an analyte arrives with an id.
 
 ## Plan
-Buildable now, and not blocked on 0001. The matching logic and the obvious variants (for example
+Buildable now, and not blocked on card 0001. The matching logic and the obvious variants (for example
 "Haemoglobin estimation" for `Hb`, "Creatinine" for "Serum creatinine") can go in immediately; the
 capture only refines which further aliases are worth seeding, so it is an influence rather than a
 blocker and carries no `needs:`. A merge pass over the definitions the capture splits belongs to

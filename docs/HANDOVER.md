@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-08-29 (card 0005 gave the analyte matcher its alias fallback)_
+_Last updated: 2026-08-29 (card 0006 rewrote the board's cards for the reader)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -98,9 +98,14 @@ and work now lives on the board rather than in prose.
   the labs list stopping at the API's 50-row page (it says so on screen, but does not page).
 
 ## What's next (in order)
-Card **0005** (alias matching) is built on branch `card/0005` with all five criteria met and the
-suite green; it is waiting on the scheduler's merge and review, not on more work. After it:
-1. **0006** rewrite this board's cards for the reader.
+Card **0006** (rewrite the board's cards for the reader) is built on branch `card/0006` with all
+six criteria met and the suite green, waiting on the scheduler's merge. The board now reports
+**0 of 6 open cards off convention**, measured with
+`php C:\Dev\ProgressBoard\artisan board:convention --path=<the tree you are in>`. Re-run that after
+writing any new card: it is the board's own check and it prints a total, not a list.
+
+Nothing is queued behind it. The remaining open cards all wait on Rob, not on an agent — see
+Blockers below.
 
 The queue is [board/todo/](board/todo/), one card per file.
 
@@ -109,16 +114,24 @@ opened in a browser — Herd serves the SPA from `C:\Dev\BioTracker`, not from t
 built in. Run `/run` against it before trusting it.
 
 ## Blockers / open questions
-Two cards sit in [board/human-review/](board/human-review/) and both need Rob rather than an agent:
+Four cards sit in [board/human-review/](board/human-review/) and all four need Rob rather than an
+agent:
 - **0001** the full PKB capture. It needs his logged-in portal session, so no agent can do it, and
   until it lands Phase 6 is verified against six results.
 - **0003** the SPA Lab Results view, which needs the browser check no worktree can do.
+- **0004** the doc anchors and **0005** alias matching. Both were built, both bounced once through
+  review, and both came back with every criterion still ticked because a reviewer may not untick
+  one. Each carries the reviewer's findings at the bottom of its thread and a loop message asking
+  Rob to untick what was disproved or say why the finding is wrong.
 
-**0002** (merge the lab-results branch or hold it for 0001) is still in [board/todo/](board/todo/),
-but the branch it names no longer exists: Phase 6 and the SPA view are both on `master`. Read the
-card before acting on it.
+**None of the four carries a `## What I need from you` section**, so the ask on each is buried at
+the bottom of a long thread. Card 0006 named that gap and left it: it is the readiness check rather
+than one of the six convention checks, and it is worth its own card.
 
-Neither of the two blocks 0005 or 0006, so a session with no answer to hand still has work.
+**0002** (merge the lab-results branch or hold it for 0001) is still in [board/todo/](board/todo/)
+and was answered on 2026-08-16 ("merge now"). The branch it names no longer exists: Phase 6 and the
+SPA view are both on `master`, so the work it asked for has happened. Its `## Why` still describes
+the world before that. Read the card before acting on it.
 
 ## How to pick up
 ```bash
