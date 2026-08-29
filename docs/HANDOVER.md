@@ -1,13 +1,13 @@
 # HANDOVER: BioTracker
 
 > Personal health journal: Laravel 12 API plus a Vue 3 SPA. A fresh session picking this up is
-> continuing Phase 6, Lab / Test Results, on the `feat/lab-results` branch.
+> finishing Phase 6, Lab / Test Results.
 
 **Stage:** active
 **Category:** site, app
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
-The SPA view exists on `card/0003` (built, suite green, never seen in a browser) and the branch is
-unmerged.
+Its API and its SPA view are both on `master` now. The view has still never been opened in a
+browser.
 _Last updated: 2026-08-29 (card 0004 created the PRD, data model, decisions log and root
 `CLAUDE.md`)_
 
@@ -85,11 +85,11 @@ and work now lives on the board rather than in prose.
 ## Current state
 - **Done:** Phases 1 to 5 are complete and shipped on master (auth and TOTP, the five log
   domains with photo uploads, gamification, analytics and report export, Fitbit and Apple Health
-  and batch import). Phase 6 exists on `feat/lab-results`: three tables, three models, the
+  and batch import). Phase 6 is on `master` too: three tables, three models, the
   matcher, the seeder, the PKB JSON importer, the queued import job, manual CRUD, the paste
   parser and its preview endpoint, the trends endpoint, a lab section in the CSV and PDF report,
-  and seven feature tests. The whole suite is green (9 passing). It has been verified end to end
-  against one real captured lipid panel: 1 panel and 6 results created, re-import idempotent,
+  the SPA view, and its feature tests. The whole suite is green (10 passing). It has been
+  verified end to end against one real captured lipid panel: 1 panel and 6 results created, re-import idempotent,
   out-of-range flags matching the portal, comments encrypting and decrypting, trends returning a
   numeric series, the PDF rendering its lab section.
 - **In progress:** nothing half-built. The tree is clean and the branch is coherent.
@@ -111,17 +111,20 @@ built in. Run `/run` against it before trusting it.
 Two cards sit in [board/human-review/](board/human-review/) and both need Rob rather than an agent:
 - **0001** the full PKB capture. It needs his logged-in portal session, so no agent can do it, and
   until it lands Phase 6 is verified against six results.
-- **0002** whether to merge `feat/lab-results` now or hold it for 0001. The card carries three
-  options and a recommendation.
+- **0003** the SPA Lab Results view, which needs the browser check no worktree can do.
 
-Neither blocks 0003, 0004 or 0005, so a session with no answer to hand still has work.
+**0002** (merge the lab-results branch or hold it for 0001) is still in [board/todo/](board/todo/),
+but the branch it names no longer exists: Phase 6 and the SPA view are both on `master`. Read the
+card before acting on it.
+
+Neither of the two blocks 0005 or 0006, so a session with no answer to hand still has work.
 
 ## How to pick up
 ```bash
 # PHP is not on PATH; Herd's is the one the tests were run with
 PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 
-"$PHP" artisan test                      # expect: 9 passed (46 assertions)
+"$PHP" artisan test                      # expect: 10 passed (60 assertions)
 "$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 53 analytes
 "$PHP" artisan route:list --path=lab     # expect: the 5 lab route groups from routes/api.php
 
@@ -135,7 +138,7 @@ Sign in with the seeded demo account named in `README.md`.
 - `/handover resume` to start the next session: it reads this doc and the board, then picks up the
   head card without re-planning.
 - `/run` when the SPA work in 0003 needs to be seen working rather than just tested.
-- `/code-review` before 0002 is answered, since nothing in Phase 6 has had an adversarial pass.
+- `/code-review` on the lab domain: nothing in Phase 6 has had an adversarial pass.
 - `/checkpoint` to update the docs and commit mid-session without a full handover.
 - ProgressBoard at `C:\Dev\ProgressBoard` renders this board with every other project's; do not
   build a second renderer.
@@ -153,9 +156,9 @@ Sign in with the seeded demo account named in `README.md`.
 | `CLAUDE.md` (repo root) | The orient tripwire a fresh session hits first, plus the build/test commands |
 
 ## Branch status
-On `feat/lab-results`, two commits ahead of `master` (Phase 6, plus this session's docs
-consolidation), tree clean. No PR, and the branch has never been pushed: `master` is the only
-branch tracking `origin`. Merging is card 0002.
+Card work happens on a `card/NNNN` branch in a worktree, and the scheduler merges it back into
+`master`; `feat/lab-results` is gone and its work is on `master`. Nothing has been pushed:
+`master` is the only branch tracking `origin`, and there is no PR.
 
 ## Session log
 No prose log here by design. The narrative is the commit history, and the commit messages are
