@@ -74,7 +74,12 @@ Assumed, and worth a look:
   barcode, photo calorie estimation, meal plans) is recorded as a roadmap, not as requirements.
 - Also updated in `HANDOVER.md` beyond the two sections the card names: the "Canonical data shape"
   and "Decisions locked" sections said those files were missing, which this card made false, and
-  "What's next" still had 0004 at its head. Left everything else alone.
+  "What's next" still had 0004 at its head. A second pass fixed what was stale rather than
+  missing, all of it measured: `feat/lab-results` no longer exists and Phase 6 is on `master`
+  (`git branch -a`, and `card/0004` is one commit ahead of `master`), the suite is 10 tests and 60
+  assertions rather than 9 and 46, and `human-review/` holds 0001 and 0003 while 0002 sits in
+  `todo/`. I did not touch card 0002 itself, only the sentence in the handover that pointed at a
+  branch that is gone.
 
 Link check (AC #5): 37 relative links across every tracked `*.md` plus the four new files. All
 resolve except two in `docs/board/README.md`, and both are illustrative rather than real —
