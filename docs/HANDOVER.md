@@ -5,9 +5,10 @@
 
 **Stage:** active
 **Category:** site, app
-**Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only;
-no SPA view for it yet, and the branch is unmerged.
-_Last updated: 2026-08-10 (docs consolidated under `docs/`, board scaffolded, five cards opened)_
+**Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
+The SPA view exists on `card/0003` (built, suite green, never seen in a browser) and the branch is
+unmerged.
+_Last updated: 2026-08-29 (card 0003 built the SPA Lab Results view)_
 
 ## Goal & success criteria
 **Gap: there is no `docs/PRD.md`.** Card 0004 owes it, and the summary below is the interim, not
@@ -76,8 +77,8 @@ app/Http/Controllers/Api/V1/   LabResult / LabPanel / LabImport controllers
 database/seeders/LabTestDefinitionSeeder.php   the 53 seeded analytes
 routes/api.php         note lines 74-79: the specific lab routes are declared BEFORE the
                        apiResource, or /lab-results/trends is swallowed by {lab_result}
-resources/js/views/    one view per domain, all registered in router/index.js; there is no
-                       LabsView yet (card 0003)
+resources/js/views/    one view per domain, all registered in router/index.js
+  LabsView.vue            card 0003: panel-grouped list, analyte trend chart, PKB upload
 docs/spec/, docs/build/, docs/board/
 ```
 The seams a fresh session should not re-derive: all three lab ingest paths normalise to one DTO
@@ -108,14 +109,19 @@ and work now lives on the board rather than in prose.
   out-of-range flags matching the portal, comments encrypting and decrypting, trends returning a
   numeric series, the PDF rendering its lab section.
 - **In progress:** nothing half-built. The tree is clean and the branch is coherent.
-- **Known bugs / broken:** none open. The two known shortfalls are scope rather than defects: the
-  dead `aliases` fallback (card 0005) and no SPA view for lab results (card 0003).
+- **Known bugs / broken:** none open. The known shortfalls are scope rather than defects: the dead
+  `aliases` fallback (card 0005), the demo seeder writing no lab data so `/labs` on the demo
+  account only ever shows its empty state, and the labs list stopping at the API's 50-row page
+  (it says so on screen, but does not page).
 
 ## What's next (in order)
 The queue is [board/todo/](board/todo/), one card per file. At its head:
-1. **0003** the Lab Results view in the SPA, the largest genuinely buildable piece.
-2. **0004** create the missing doc anchors and promote the lab schema into `DATA-MODEL.md`.
-3. **0005** alias matching, which closes the one live divergence in the data shape.
+1. **0004** create the missing doc anchors and promote the lab schema into `DATA-MODEL.md`.
+2. **0005** alias matching, which closes the one live divergence in the data shape.
+
+Card 0003 (the SPA Lab Results view) is built and its acceptance is ticked, but it has never been
+opened in a browser — Herd serves the SPA from `C:\Dev\BioTracker`, not from the worktree it was
+built in. Run `/run` against it before trusting it.
 
 ## Blockers / open questions
 Two cards sit in [board/human-review/](board/human-review/) and both need Rob rather than an agent:
