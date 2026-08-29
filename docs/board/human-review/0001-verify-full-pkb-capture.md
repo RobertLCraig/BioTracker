@@ -37,10 +37,21 @@ in §2.5 was written from that one sample, so every other shape it claims to han
 results, comparators like `>60`, non-numeric ranges, embargoed `delayedDisplayDate` results,
 withdrawn and corrected status) is mapped but has never met real data.
 
+## Links
+
+**Relates to**
+- `0002` - the merge decision this capture could have changed. It was answered on 2026-08-16 to
+  merge now and treat whatever this capture finds as a follow-up, so nothing here holds it up.
+- `0003` - the Lab Results view, which is the screen this capture's data would appear on. The
+  seeded demo account writes no lab rows, so that view has only ever been seen against its empty
+  state.
+- `0005` - alias matching. Its aliases were guessed from ordinary UK pathology naming, and the
+  list of uncurated definitions this capture creates is the real evidence a second pass needs.
+
 ## Not this card
-Not curating the analyte catalog, not adding alias matching (0005), not building any UI (0003),
-and not merging the branch (0002). This card ends when one full capture has been imported and the
-mismatches are written down.
+Not curating the analyte catalog, not adding alias matching (card 0005), not building any UI
+(card 0003), and not merging the branch (card 0002). This card ends when one full capture has been
+imported and the mismatches are written down.
 
 ## Acceptance
 <!-- AC:BEGIN -->
