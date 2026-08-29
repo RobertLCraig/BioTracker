@@ -87,3 +87,50 @@ but a run of `/run` against `C:\Dev\BioTracker` after the merge would confirm th
 groups as it did.
 
 Suite: 15 passed, 75 assertions (was 10 passed, 60 assertions).
+
+### 2026-08-29 review (v20260829164858-8115)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 27s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I traced each criterion to real code.
+
+**#1 alias fallback** ÔÇö `LabTestDefinition::resolveForImport()` falls through `where('slug', ÔÇª)->first() ?? static::matchAlias($slug)` before the `create()`. `LabTestDefinition::matchAlias()` compares the incoming slug to `Str::slug()` of each stored alias. Real, and `LabTestDefinitionSeeder::run()` now writes aliases, so the column is live.
+
+**#2 case and whitespace** ÔÇö both sides are slugged: `resolveForImport()` slugs the incoming name, `matchAlias()` slugs each alias. `Str::slug` folds case, edge and inner spacing. Test `test_alias_resolves_without_creating_a_second_definition` pins `'  haemoglobin   ESTIMATION  '`.
+
+**#3 backfill** ÔÇö the `if ($pkbTypeId && ! $byName->pkb_type_id)` branch in `resolveForImport()` sits after the `??`, so it runs on either match. One code path, not two.
+
+**#4 auto-create** ÔÇö the final `static::create([... 'is_curated' => false])` in `resolveForImport()` is unchanged and still reached.
+
+**#5 shared `test_key`** ÔÇö `LabResultController::store()` and `PkbTestImportService::import()` both set `test_key` to the resolved definition's slug. `LabResultImporter::importResults()` passes it through; `LabResult`'s boot hook only fills an empty one.
+
+I tried the alias-collision and paste-import paths. Both hold.
+
+VERDICT: sound
+
+**scope: defect**
+
+Two findings. Both are in the docs. The code itself stayed inside the fence: the match order is unchanged, and no `pkb_type_id` was hand-filled.
+
+1. `docs/HANDOVER.md`, section "What's next (in order)", says card 0005 "is built on branch `card/0005` ÔÇª waiting on the scheduler's merge and review". That branch does not exist, and commit 17fafd6 is on `master`. `CLAUDE.md` tells every session to read this file first, so the next session starts on a false statement. The same commit struck the divergence out as closed in `docs/DATA-MODEL.md`, "Known divergences (to close)", and dropped 0005 from the queue. The card's Tasks name no docs work. The build agent wrote its own result up as accepted while the card sat in review.
+
+2. `LabTestDefinitionSeeder::run()` now seeds about 120 aliases across 50 of the 53 rows. The card asked for "the obvious variants". Entries such as "GFR calculated abbreviated MDRD", "HbA1c level (IFCC standardised)" and "Neutrophil count (absolute)" are guesses at exact lab strings ÔÇö the curation that card 0001's capture is there to supply. Each row still writes `is_curated => true`, so nothing marks a guess as a guess.
+
+VERDICT: defect
+
+**breakage: defect**
+
+I read the model, both callers, the seeder, the paste parser, the SPA and the docs.
+
+**1. AC#5 breaks on any database that already has data.** `LabTestDefinition::resolveForImport()` tries the slug before the alias. A user who logged "Cholesterol" by hand before this card already has an auto-created definition with slug `cholesterol`. After seeding, "Cholesterol" still hits that slug first, so the new alias on `Serum cholesterol` is dead and the two keys stay split ÔÇö the exact split the card closes. `test_seeded_aliases_are_unique_across_the_catalog` cannot see this: it runs on a fresh seeded catalog only. No test builds an auto-created row that shadows a seeded alias.
+
+**2. The new docblock is false.** `LabTestDefinition::matchAlias()` says "53 rows". `LabTestDefinitionSeeder::run()` holds **52** definitions, and **49** carry aliases, not 50. `docs/DATA-MODEL.md` (`lab_test_definitions` table row for `aliases`) and `docs/HANDOVER.md` repeat "50 of the 53".
+
+**3. `docs/HANDOVER.md`, "What's next"** says card 0005 "is built on branch `card/0005` ... waiting on the scheduler's merge". No such branch exists; the commit is on `master`.
+
+VERDICT: defect
+
