@@ -100,3 +100,54 @@ Not settled from the repository, left for a later card rather than widened into 
 Checks: `.\vendor\bin\phpunit.bat` → OK, 10 tests, 60 assertions. There is no `vendor/bin/pest.bat`
 in this repo, so the suite was run with PHPUnit. Pint was not run because this card changed no PHP;
 every file it touched is markdown.
+
+### 2026-08-29 review (v20260829153531-44de)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 24s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+Traced each criterion.
+
+**#1** `CLAUDE.md`, "Orient before changing anything" ÔÇö first instruction reads `docs/HANDOVER.md`. Pass.
+
+**#2** `docs/DATA-MODEL.md`, sections "Lab domain (Phase 6)" and "Log domain (Phases 2 to 5)": three lab tables plus all seven log tables. I checked them column by column against `up()` in `create_lab_results_table.php`, `create_lab_panels_table.php`, `create_lab_test_definitions_table.php` and `add_client_id_to_log_tables.php`. They match, including the unique `(user_id, external_id)` and activity_logs keeping `client_id` in `metadata`. `docs/spec/lab-results-design.md` ┬º2 keeps reasoning only and links up once. Pass.
+
+**#3** `docs/DECISIONS.md` carries D1ÔÇôD4 and the "Undated (Phases 1 to 5)" table; `docs/build/PROJECT_STATUS.md` "Key Architecture Decisions" is now a pointer. Pass.
+
+**#4** `docs/PRD.md` exists; `docs/HANDOVER.md` "Goal & success criteria" is one line linking it. Pass.
+
+**#5** I ran the link check over every tracked `*.md`. Two fail, both prose examples in `docs/board/README.md`, both pre-existing and skill-owned. Every link this card wrote resolves. Pass.
+
+**#6** `README.md` "Lab / Test Results" lists ten endpoints; they match design ┬º6 and the lab block in `routes/api.php`. Pass.
+
+Small nit, not a defect: `docs/PRD.md` "Open questions" still names the gone `feat/lab-results`.
+
+VERDICT: sound
+
+**scope: defect**
+
+**Over the fence.** `docs/spec/lab-results-design.md`, ┬º2 "Data model". The card says "not touching the lab design doc beyond linking it" and "leave ┬º2 in place". The three field tables, the enum block and the `abnormal_flag` rule were deleted, about 110 lines. AC #2 ("one home per field") pulls the other way, so the reading is arguable, but the deletion is over the fence as written.
+
+**Half done, and this must be fixed.** Same file, the header block. The agent rewrote the `Scope:` paragraph to say the feature is "Built as 'Phase 6'". Three lines above it, `Status: **design-spec** (no code yet)` is untouched. The file now contradicts itself in its first five lines. The agent edited that block, then filed the neighbouring line as out of scope. A fresh session reads "no code yet" first.
+
+**Beyond the ask.** `docs/HANDOVER.md`. The card named two sections. The change also rewrote the blurb, "Status", "Current state", "Blockers / open questions", the test counts in "How to pick up", "Suggested skills" and "Branch status". Measured and declared, but not asked for.
+
+**AC #5 not fully met.** Two relative links in `docs/board/README.md` still do not resolve.
+
+VERDICT: defect
+
+**breakage: defect**
+
+I tried to break it. It broke twice, both in the new canonical doc.
+
+**1. `docs/DATA-MODEL.md`, `lab_panels` table row for `client_id` and the "Dedup keys" section, both say a panel's `client_id` is "the lowest `external_id` of its results, or a synthesised hash".** The shipped code does not. `LabResultImporter::resolvePanel()` upserts on `['user_id', 'client_id' => $orderId]`, so `client_id` **is** the `lab_order_id`. This claim was copied from the design doc's pre-code ┬º2 (`git show a3c2a41 -- docs/spec/lab-results-design.md`, removed line for `client_id`), not checked against the importer. The card comment says the tables "were checked against `database/migrations/`" ÔÇö the migration has the column, so the check could not catch this.
+
+**2. Same "Dedup keys" section: "Lab, manual or paste: ÔÇª `external_id` is synthesised as `sha1(user_id | test_key | sampled_at | value_text | lab_order_id)`".** No manual or paste path writes `external_id` at all ÔÇö nothing in `LabResultParser` or `LabResultController` sets it. The only sha1 is in `PkbTestImportService::mapDataPoint()`, inside the **PKB JSON** path, and it is `sha1(pkb_type_id|name . date.value . value.display)`: three parts, no `user_id`, no `lab_order_id`.
+
+Neither is in the doc's "Known divergences" list, and the doc's own preamble says a diverging layer "is a bug to close". Next session fixes working code to match a false rule.
+
+VERDICT: defect
+
