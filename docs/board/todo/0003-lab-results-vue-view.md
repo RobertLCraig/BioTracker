@@ -99,3 +99,49 @@ concatenation) differs from the Laravel preset throughout. I reverted all of it 
 one-file card in a repo-wide reformat. `pint --test` on the one PHP file I did touch reports only
 `concat_space`, on a pre-existing line I did not write, so the code I added is Pint-clean. Running
 Pint across the repository is a decision for Rob and belongs in its own commit.
+
+### 2026-08-29 review (v20260829140236-162c)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 24s, run by this job rather than reported by the card.
+
+**acceptance: defect**
+
+**Traced, all six.** File: `resources/js/views/LabsView.vue` unless said.
+
+- **#1** `groups` (computed) buckets rows from `/lab-results`; `LabResultController::index` sorts `orderByDesc('sampled_at')`. Columns come from `valueOf`, `rangeOf`, `flagOf`.
+- **#2** `flagOf` + the `FLAGS` map. Its keys match every `AbnormalFlag` case value. Badge plus coloured row border.
+- **#3** `loadTrend` calls `/lab-results/trends?test_key=`; `chartData` draws the series plus two range datasets, the high one `fill: '+1'` onto the low one. `Filler` is registered.
+- **#4** `upload` posts `file` through `postForm` to `LabImportController::pkb`, and prints `panels` / `results_created` from `LabResultImporter::import`.
+- **#5** `valueOf` falls back to `value.text`; `chartPoints` drops null values.
+- **#6** the `v-else-if="!results.length"` block, with an Import button.
+
+**One break.** `groups` looks panel names up in `panels`, filled from **one page** of `/lab-panels`, and `LabPanelController::index` paginates at 25. A row whose `lab_panel_id` is not on that page gets `p === undefined`, so the group is headed **"Not part of a panel"** ÔÇö the view tells the user a real panel is not a panel. Fires when the newest 50 results span over 25 panels. Fixable in the view alone.
+
+VERDICT: defect
+
+**scope: defect**
+
+**Fence: held.** No API endpoint, resource, exporter, edit/delete or paste-preview code was touched. Only `LabsView.vue`, the route, the nav entry, one test and `HANDOVER.md`.
+
+**Left half done, and worse than the card says.**
+
+The card discloses one cap: 50 results. It does not disclose the second. `/lab-panels` pages at 25 (`LabPanelController::index`), but the view loads results 50 at a time. In `LabsView.vue`, the `groups` computed looks each result's panel up in the loaded map. A result whose panel is number 26 or later gets `undefined`, so its heading falls to the panel-less branch and reads **"Not part of a panel"**. That is AC #1's grouping printing a false heading, not just truncating.
+
+The reason given for not paging is also wrong. `LabResultController::index` uses `paginate(50)`, which already answers `?page=2`. Looping pages in `load()` is client-only work and needs no API change, so the fence the card cites does not apply.
+
+Task 6 is unticked and the agent says #1, #2, #3 and #5 cannot be checked ÔÇö yet all six boxes are ticked.
+
+VERDICT: defect
+
+**breakage: defect**
+
+I read `LabsView.vue`, `useApi.js`, the router/nav diff, `LabResultController`, `LabPanelController`, `LabResultResource`, `LabPanelResource`, `AbnormalFlag`, `UserOwnedScope` and the added test. Flag keys, resource field names, import response keys, `postForm`, `Filler` and the `fill: '+1'` band all check out. Two things do not.
+
+**1. The panel map is truncated, and a miss is silently relabelled.** `load()` in `LabsView.vue` fills `panels` from one page of `/lab-panels`, which `LabPanelController::index` caps at 25, while `/lab-results` returns 50 rows. The `groups` computed does `panels.value[r.lab_panel_id]`, and a lookup miss is indistinguishable from `lab_panel_id === null`, so it prints "Not part of a panel". Failure: 50 single-test orders (INR or HbA1c monitoring is exactly one result per order) means 25 groups falsely titled as having no panel, no warning. The view surfaces the 50-result cap but not this one, and `pan.data.meta.total` is available and unused. It also makes the docblock on `groups` false ÔÇö that bucket is claimed to hold only results with no `lab_order_id`.
+
+**2. The chart goes stale after a repeat import.** `upload()` calls `load()`, and `load()` only calls `loadTrend()` when `testKey` is empty, which it is not after the first render. New rows appear in the list; the selected analyte's trend still shows pre-import points.
+
+VERDICT: defect
+
