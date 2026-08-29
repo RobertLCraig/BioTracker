@@ -191,6 +191,53 @@ class LabResultImportTest extends TestCase
         $this->assertStringStartsWith('%PDF', $pdf);
     }
 
+    /**
+     * The SPA's Labs view groups the flat result list by panel and renders the
+     * value/range/flag from these exact fields, so pin them.
+     */
+    public function test_index_carries_the_fields_the_labs_view_groups_and_renders_on(): void
+    {
+        $user = User::factory()->create();
+        app(PkbTestImportService::class)->import($user, $this->pkbPayload());
+
+        // A standalone manual result: no lab_order_id, so no panel (see LabResultImporter).
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/lab-results', [
+            'test_name' => 'Serum ferritin',
+            'value_text' => '30',
+            'value_numeric' => 30,
+            'unit' => 'ug/L',
+            'sampled_at' => '2026-08-01T09:00:00Z',
+        ])->assertCreated();
+
+        $rows = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/lab-results')
+            ->assertOk()
+            ->json('data');
+
+        // Newest first, and the panel-less row is distinguishable from panelled ones.
+        $this->assertSame('Serum ferritin', $rows[0]['test_name']);
+        $this->assertNull($rows[0]['lab_panel_id']);
+        $this->assertNotNull($rows[1]['lab_panel_id']);
+
+        $hdl = collect($rows)->firstWhere('test_name', 'Serum HDL cholesterol');
+        $this->assertSame('low', $hdl['abnormal_flag']);
+        $this->assertSame('mmol/L', $hdl['value']['unit']);
+        // decimal:4 casts, which the view trims back to 0.8 / 1 – 3.
+        $this->assertSame(0.8, (float) $hdl['value']['numeric']);
+        $this->assertSame(1.0, (float) $hdl['range']['low']);
+        $this->assertSame(3.0, (float) $hdl['range']['high']);
+
+        // Panels supply the group heading and its date.
+        $panel = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/lab-panels')
+            ->assertOk()
+            ->json('data.0');
+
+        $this->assertSame($hdl['lab_panel_id'], $panel['id']);
+        $this->assertSame('ORDER1', $panel['lab_order_id']);
+        $this->assertNotNull($panel['collected_at']);
+    }
+
     public function test_manual_store_resolves_definition(): void
     {
         $user = User::factory()->create();

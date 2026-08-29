@@ -19,6 +19,7 @@ const routes = [
             { path: 'medications',  name: 'medications',  component: () => import('@/views/MedicationsView.vue') },
             { path: 'symptoms',     name: 'symptoms',     component: () => import('@/views/SymptomsView.vue') },
             { path: 'vitals',       name: 'vitals',       component: () => import('@/views/VitalsView.vue') },
+            { path: 'labs',         name: 'labs',         component: () => import('@/views/LabsView.vue') },
             { path: 'analytics',    name: 'analytics',    component: () => import('@/views/AnalyticsView.vue') },
             { path: 'achievements', name: 'achievements', component: () => import('@/views/AchievementsView.vue') },
             { path: 'reports',      name: 'reports',      component: () => import('@/views/ReportsView.vue') },
