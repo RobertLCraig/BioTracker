@@ -158,3 +158,53 @@ card edit.
    is wrong, and that ask is buried at the bottom of a long thread rather than stated at the top.
    That is the readiness check, not one of the six convention checks, and it is not in this card's
    acceptance — so it is named here rather than fixed. It is worth its own card.
+
+### 2026-08-29 review (v20260829175843-48d0)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 1s, run by this job rather than reported by the card.
+
+**acceptance: defect**
+
+I traced all six against the board files and re-ran the check myself.
+
+**Met.** #2 ÔÇö `docs/board/todo/0002-merge-lab-results-branch.md`, `## What I need from you`, its **Why it needs you** paragraph names a preference ("how you want master's history to read"); 0002 is the board's only `## Options` card. #3 ÔÇö `## Links` sections now exist on 0001, 0005 and 0002, each entry with a relationship and a reason; every prose number also appears there, so none is "the only mention". #4 ÔÇö no card carries frontmatter and none carries a `Blocked by` line, so both directions hold. #5 ÔÇö `git show 25d62d6` is additions and respellings only; `## Decided` on 0002 is untouched. #6 ÔÇö I ran `board:convention --path=C:/Dev/BioTracker`: it prints `BioTracker 0 6 0007`.
+
+**Not met: #1.** In `docs/board/todo/0002-merge-lab-results-branch.md`, `## What I need from you` sits above `## Why` and says "My recommendation is **2**: merge now" ÔÇö a solution before the problem. The card's own `## Comments` admits this fails a strict reading and defends it as convention-mandated, but `docs/board/README.md`, section "The one section a card in `human-review/` must have", scopes ask-first to `human-review/`. 0002 is in `todo/`. No convention forces the order. #1 is ticked and unmet.
+
+VERDICT: defect
+
+**scope: sound**
+
+**What I checked:** the one commit that did this work (`25d62d6`), against the card's four fences.
+
+**Over the fence: nothing found.**
+- `docs/board/README.md` (the convention) was not touched ÔÇö the commit changes 5 files, none of them it.
+- `done/` and `discarded/` are empty. Nothing deleted; every hunk adds text or respells `0001` as `card 0001`.
+- `## Decided` on `docs/board/todo/0002-merge-lab-results-branch.md` was not edited.
+- No other board was written to. ProgressBoard's same-day commits are its own scheduler's, timed before this one.
+- `docs/HANDOVER.md` was edited, which is outside `docs/board/`. That is in-repo and is what every prior card commit here did (`17fafd6`, `206f2ca`), so it is house practice, not growth.
+
+**Half done: nothing that a next session can fix.** Tasks 1 and 4 in `## Tasks` say write the count into `## Direction`; the counts went into `## Comments` instead. `docs/board/README.md`, section "Comments: one thread", retires `## Direction` and says new entries go under `## Comments`. Both counts, before and after, are in that entry.
+
+Both temptations (0002's stale `## Why`, the missing ask sections) were named in `## Comments` and left.
+
+VERDICT: sound
+
+**breakage: defect**
+
+**Breakage findings**
+
+1. `docs/board/todo/0002-merge-lab-results-branch.md`, `## Options`, still reads "Hold until 0001 verifies" and "treat 0001's findings as follow-ups". `docs/board/human-review/0001-verify-full-pkb-capture.md`, `## Tasks`, still reads "That list is the input to 0005." The `card NNNN` respelling was applied to `## Why` and `## Not this card` on those same two files and not to these. Same rule, two places, one applied.
+
+2. This is silent. `Reference::NOTATION` reads a number only after the word `card`, so `Card::conventionFlags()` check #1 cannot see a bare number at all. The "0 of 6" count is not evidence about these lines.
+
+3. It costs the reader. Nothing renders the parsed section: `Card::links()` has no view caller anywhere in `resources/views`. So `Reference::link()` over prose is the only thing that makes a mention clickable. Those three mentions stay dead text, including in `## Options`, the section Rob answers from.
+
+4. The report is false as written. `0006`'s `## Comments` says the prose mentions were spelled `card NNNN`. On 0001 and 0002 that holds for two sections and not the rest.
+
+Criterion #3 is literally satisfied, so the tick is arguable, not the gap.
+
+VERDICT: defect
+
