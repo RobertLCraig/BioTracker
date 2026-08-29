@@ -55,14 +55,17 @@ class LabTestDefinition extends Model
             }
         }
 
+        // Slugging folds case and surrounding whitespace away on both sides of the
+        // comparison, so "  serum CHOLESTEROL " and "Serum cholesterol" match.
         $slug = Str::slug($name) ?: 'unknown';
 
-        $byName = static::where('slug', $slug)->first();
+        $byName = static::where('slug', $slug)->first() ?? static::matchAlias($slug);
         if ($byName) {
             // Backfill the PKB id onto a curated seed the first time we see it.
             if ($pkbTypeId && ! $byName->pkb_type_id) {
                 $byName->update(['pkb_type_id' => $pkbTypeId, 'code_system' => $codeSystem]);
             }
+
             return $byName;
         }
 
@@ -74,5 +77,24 @@ class LabTestDefinition extends Model
             'default_unit' => $unit ?: null,
             'is_curated' => false,
         ]);
+    }
+
+    /**
+     * First definition whose `aliases` hold a name that slugs to $slug.
+     *
+     * ponytail: scans the catalog in PHP because `aliases` is a JSON column and the
+     * comparison is on the slug, not the stored text — no portable SQL does that. The
+     * catalog is seeded reference data (53 rows), so this is one small query. If it ever
+     * grows past a few hundred rows, store the slugged alias in its own indexed table.
+     */
+    private static function matchAlias(string $slug): ?self
+    {
+        return static::whereNotNull('aliases')->get()->first(
+            fn (self $definition) => in_array(
+                $slug,
+                array_map(fn ($alias) => Str::slug((string) $alias), $definition->aliases ?? []),
+                true,
+            ),
+        );
     }
 }

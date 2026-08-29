@@ -25,20 +25,65 @@ this card's second visit.
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [ ] #1 WHEN an incoming analyte name matches no slug but matches an entry in a definition's
+- [x] #1 WHEN an incoming analyte name matches no slug but matches an entry in a definition's
       `aliases`, THE APP SHALL resolve to that definition rather than creating a new one.
-- [ ] #2 WHEN matching by name or alias, THE APP SHALL ignore case and surrounding whitespace.
-- [ ] #3 WHEN a definition is resolved by alias and the payload carries a `pkb_type_id` the
+- [x] #2 WHEN matching by name or alias, THE APP SHALL ignore case and surrounding whitespace.
+- [x] #3 WHEN a definition is resolved by alias and the payload carries a `pkb_type_id` the
       definition lacks, THE APP SHALL backfill that id, as it already does on a slug match.
-- [ ] #4 IF an analyte matches neither an id, a slug, nor an alias, THEN THE APP SHALL still
+- [x] #4 IF an analyte matches neither an id, a slug, nor an alias, THEN THE APP SHALL still
       create an uncurated definition rather than dropping the row.
-- [ ] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
+- [x] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
       definition, THE APP SHALL give them the same `test_key` so they trend as one series.
 <!-- AC:END -->
 
 ## Tasks
-- [ ] Extend `resolveForImport()` with an alias lookup between the slug match and the auto-create.
-- [ ] Extend the seeder row shape to carry aliases and seed the obvious variants.
-- [ ] Feature test covering alias resolution, the case/whitespace rule, and the `pkb_type_id`
+- [x] Extend `resolveForImport()` with an alias lookup between the slug match and the auto-create.
+- [x] Extend the seeder row shape to carry aliases and seed the obvious variants.
+- [x] Feature test covering alias resolution, the case/whitespace rule, and the `pkb_type_id`
       backfill on an alias match.
-- [ ] Re-run `php artisan test`.
+- [x] Re-run `php artisan test`.
+
+## Comments
+
+**2026-08-29** Built the alias fallback. `LabTestDefinition::resolveForImport()` now tries
+`static::matchAlias($slug)` when the slug lookup misses, and the backfill branch that already ran on
+a slug match now runs on either, so #3 came for free rather than as a second code path. Both callers
+(`LabResultController::store()` and `PkbTestImportService`) already set `test_key` to the resolved
+definition's slug, so #5 needed no code, only the test that pins it.
+
+Matching is slug-to-slug on both sides, which is what satisfies #2: `Str::slug()` folds case,
+surrounding and inner whitespace, and punctuation, so the seeder lists a naming variant once and
+does not need its punctuated and spaced spellings as separate entries. `matchAlias()` scans the
+catalog in PHP rather than in SQL — `aliases` is a JSON column and the comparison is on the slug of
+its entries, not their stored text, so no portable query does it. At 53 seeded rows that is one
+small query; there is a `ponytail:` comment on the method naming the ceiling and the upgrade path
+(an indexed alias table) if the catalog ever reaches a few hundred rows.
+
+Seeder row shape changed from `[name, unit, category, pkb_type_id?]` to
+`[name, unit, category, aliases?, pkb_type_id?]`, so the six lipid rows moved their id one position
+right. 50 of the 53 definitions now carry aliases; the three that do not are the comment rows
+(`EGFR comment 1`, `Comment for HbA1c`, `Faecal occult blood comment`), which have no naming
+variants worth guessing at. The aliases seeded are the ordinary UK pathology variants — the
+`Serum X` / `X` pairing, and the expansion of each abbreviation — and not a curation of the catalog
+against a real capture, which the card puts out of scope and 0001 has to supply.
+
+A sixth test guards a hazard the card does not name: two definitions claiming one alias would make
+resolution depend on row order. It asserts every alias slug and every definition slug is unique
+across the catalog, and it earned its place immediately — it caught `Non-HDL cholesterol` and
+`Non HDL cholesterol` on the same row slugging identically, and that entry was dropped as redundant.
+
+Assumed, because the repository does not say: that an alias is a full analyte name rather than a
+fragment to match on, so matching is exact-after-slugging and never substring. Substring matching
+would pull `Serum iron` into `Serum iron binding capacity`, which is a different analyte.
+
+Two things I could not settle here. `.\vendor\bin\pint.bat --test tests/Feature/LabResultImportTest.php`
+fails on `concat_space`, and it fails identically on that file at HEAD — it is the paste-parser
+test's string concatenation from before this card, not anything added here, and per `CLAUDE.md`
+reformatting untouched code is Rob's call. The two files this card actually rewrote,
+`app/Models/LabTestDefinition.php` and `database/seeders/LabTestDefinitionSeeder.php`, both pass
+Pint. And nothing here was seen in a browser: the worktree is not what Herd serves. It needs no
+browser check that I can see — the change is behind the API and the SPA reads `test_key` as before —
+but a run of `/run` against `C:\Dev\BioTracker` after the merge would confirm the labs list still
+groups as it did.
+
+Suite: 15 passed, 75 assertions (was 10 passed, 60 assertions).
