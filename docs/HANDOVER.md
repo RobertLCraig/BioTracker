@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-09-28 (card 0007: the lab-results index pages tied rows in a fixed order)_
+_Last updated: 2026-09-28 (card 0008: a manual result with an order id joins its panel)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -74,7 +74,8 @@ docs/spec/, docs/build/, docs/board/
 ```
 The seams a fresh session should not re-derive: only the PKB JSON path goes through
 `LabResultImporter`, which dedups on `external_id` (the PKB datapoint id) and upserts panels on
-`lab_order_id`; manual entries go straight to `LabResult::create()` with no dedup (see
+`lab_order_id`; manual entries go straight to `LabResult::create()` with no dedup, but join their
+order's panel on the same key when they carry a `lab_order_id` (card 0008; see
 [DATA-MODEL.md](DATA-MODEL.md#dedup-keys)); and the route ordering note above is a real trap, not
 a style preference.
 
@@ -136,7 +137,7 @@ the world before that. Read the card before acting on it.
 # PHP is not on PATH; Herd's is the one the tests were run with
 PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 
-"$PHP" artisan test                      # expect: 18 passed (87 assertions)
+"$PHP" artisan test                      # expect: 19 passed (96 assertions)
 "$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 52 analytes
 "$PHP" artisan route:list --path=lab     # expect: the 5 lab route groups from routes/api.php
 

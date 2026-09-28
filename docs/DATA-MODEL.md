@@ -260,16 +260,18 @@ required foreign key should prevent.
   `PkbTestImportService::mapDataPoint()` synthesises one as
   `sha1((pkb_type_id ?? name) | date.value | value.display)`. A panel's `client_id` is its
   `lab_order_id`, and panels upsert on `(user_id, client_id)`.
-- **Lab, manual or paste:** no dedup. `POST /lab-results` writes no `external_id` and no panel, so
-  the same result posted twice is two rows. Paste (`POST /lab-results/parse`) never persists; its
+- **Lab, manual or paste:** no dedup. `POST /lab-results` writes no `external_id`, so the same
+  result posted twice is two rows. A posted `lab_order_id` joins the user's panel on
+  `(user_id, client_id)`, created as `source = manual` if none exists; an existing panel is not
+  overwritten. `PUT` still drops `lab_order_id` (card 0009). Paste (`POST /lab-results/parse`) never persists; its
   confirmed rows go through that same `POST /lab-results`.
 - **The five log tables:** `client_id`, supplied by the client, unique per table.
   `activity_logs` has no `client_id` column — it keeps the value inside its `metadata` JSON.
 
 ### One shape, three ingest paths
 Only the PKB JSON importer persists through `LabResultImporter`. The manual controller calls
-`LabResult::create()` itself, and the paste parser only previews. So dedup and panel inference
-apply to PKB imports only. Both persisting paths set `test_key` from the resolved definition.
+`LabResult::create()` itself, and the paste parser only previews. So dedup applies to PKB imports
+only; panel inference applies to both, on the same key. Both persisting paths set `test_key` from the resolved definition.
 The PKB JSON → column map is [spec/lab-results-design.md](spec/lab-results-design.md) §2.5.
 
 ---
