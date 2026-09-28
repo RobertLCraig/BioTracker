@@ -384,3 +384,5 @@ VERDICT: defect
 
 - **#6 reopened**, by the breakage lens: the README row for `POST /lab-results` says it takes "optional inline panel fields", but `LabResultController::store()` makes no panel, and `DATA-MODEL.md` says so.
 
+**2026-09-29** **Decided:** Point only to DATA-MODEL.md. The design doc keeps its reasoning and links to `docs/DATA-MODEL.md` for the §2 field tables and the §4 dedup rules, and its stale §3c, §6 and §9 lines about paste going through `/import` get the same fix. Settled by an attended agent under Rob's rule that human-review holds only what he must decide. The source is `C:\Dev\About-Me\Project-Doc-Standard.md`, "Single source of truth": each concern lives in one doc and other docs link to it rather than copy it. The second copy in §4 has already gone wrong once on this card. Still owed before review is #6: the README row for `POST /lab-results` says "optional inline panel fields", but `LabResultController::store()` makes no panel.
+
