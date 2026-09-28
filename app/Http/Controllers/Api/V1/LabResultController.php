@@ -17,7 +17,7 @@ class LabResultController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = LabResult::with('testDefinition')->orderByDesc('sampled_at');
+        $query = LabResult::with('testDefinition')->orderByDesc('sampled_at')->orderByDesc('id');
 
         if ($request->filled('test_key')) {
             $query->where('test_key', $request->input('test_key'));

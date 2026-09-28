@@ -238,6 +238,43 @@ class LabResultImportTest extends TestCase
         $this->assertNotNull($panel['collected_at']);
     }
 
+    /** Card 0007: one panel shares one sampled_at, so the page edge falls inside a tie. */
+    public function test_index_pages_tied_results_without_repeats_or_gaps(): void
+    {
+        $user = User::factory()->create();
+        $definitions = LabTestDefinition::pluck('slug', 'id');
+
+        $expected = [];
+        foreach (range(1, 120) as $i) {
+            $id = $definitions->keys()[$i % $definitions->count()];
+            $expected[] = LabResult::create([
+                'user_id' => $user->id,
+                'test_definition_id' => $id,
+                'test_name' => "Analyte $i",
+                'test_key' => $definitions[$id],
+                'value_text' => (string) $i,
+                'sampled_at' => '2026-07-17 09:00:00',
+            ])->id;
+        }
+
+        $seen = [];
+        foreach ([1, 2, 3] as $page) {
+            $ids = $this->actingAs($user, 'sanctum')
+                ->getJson("/api/v1/lab-results?page=$page")
+                ->assertOk()
+                ->json('data.*.id');
+            array_push($seen, ...$ids);
+        }
+
+        // SQLite happens to repeat its tie order on every page, so it cannot show a row on two
+        // pages or none. What it can show is whether the order is total: the tie-break the fix adds.
+        $this->assertSame(array_reverse($expected), $seen, 'Tied results are not ordered by a unique key.');
+        $this->assertSame(array_unique($seen), $seen, 'A result appeared on two pages.');
+        sort($expected);
+        sort($seen);
+        $this->assertSame($expected, $seen, 'A result appeared on no page.');
+    }
+
     public function test_manual_store_resolves_definition(): void
     {
         $user = User::factory()->create();

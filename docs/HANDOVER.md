@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-09-28 (card 0005: a curated alias outranks an older auto-created row, by slug or by PKB id)_
+_Last updated: 2026-09-28 (card 0007: the lab-results index pages tied rows in a fixed order)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -100,7 +100,8 @@ and work now lives on the board rather than in prose.
 - **In progress:** nothing half-built. The tree is clean and the branch is coherent.
 - **Known bugs / broken:** none open. The known shortfalls are scope rather than defects: the demo
   seeder writing no lab data so `/labs` on the demo account only ever shows its empty state. The
-  labs list now walks every API page; the index's missing sort tie-break is card 0007.
+  labs list now walks every API page, and card 0007 gave the index an `id` tie-break so tied
+  `sampled_at` rows page in a fixed order.
 
 ## What's next (in order)
 Card **0005** (alias matching) is in `in-progress/` with all five criteria met, waiting on the
@@ -135,7 +136,7 @@ the world before that. Read the card before acting on it.
 # PHP is not on PATH; Herd's is the one the tests were run with
 PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 
-"$PHP" artisan test                      # expect: 17 passed (81 assertions)
+"$PHP" artisan test                      # expect: 18 passed (87 assertions)
 "$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 52 analytes
 "$PHP" artisan route:list --path=lab     # expect: the 5 lab route groups from routes/api.php
 
