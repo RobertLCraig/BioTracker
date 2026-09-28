@@ -329,6 +329,33 @@ class LabResultImportTest extends TestCase
         $this->assertSame(2, LabPanel::withoutGlobalScopes()->where('user_id', $user->id)->count());
     }
 
+    /** Card 0009: editing a result to carry an order id moves it into that order's panel. */
+    public function test_manual_update_with_order_id_moves_to_its_panel(): void
+    {
+        $user = User::factory()->create();
+        $row = [
+            'test_name' => 'Serum ferritin',
+            'value_text' => '30',
+            'value_numeric' => 30,
+            'sampled_at' => '2026-08-01T09:00:00Z',
+        ];
+
+        $id = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/lab-results', $row)
+            ->assertCreated()->json('id');
+        $this->assertNull(LabResult::withoutGlobalScopes()->findOrFail($id)->lab_panel_id);
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/lab-results/$id", $row + ['lab_order_id' => 'ORDER9'])
+            ->assertOk();
+
+        $panelId = LabResult::withoutGlobalScopes()->findOrFail($id)->lab_panel_id;
+        $this->assertNotNull($panelId, 'lab_order_id was dropped on update: the result joined no panel.');
+        $panel = LabPanel::withoutGlobalScopes()->findOrFail($panelId);
+        $this->assertSame('ORDER9', $panel->lab_order_id);
+        $this->assertSame($user->id, $panel->user_id);
+    }
+
     /** A name that matches no slug but does match an alias resolves, case and spacing aside. */
     public function test_alias_resolves_without_creating_a_second_definition(): void
     {

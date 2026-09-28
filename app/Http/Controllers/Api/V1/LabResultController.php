@@ -53,18 +53,7 @@ class LabResultController extends Controller
         $data['test_definition_id'] = $definition->id;
         $data['test_key'] = $definition->slug;   // canonical grouping key (see design §5)
 
-        // Same panel key as LabResultImporter::resolvePanel(), but firstOrCreate: a manual
-        // row must not overwrite what an import recorded on the panel.
-        if (filled($data['lab_order_id'] ?? null)) {
-            $data['lab_panel_id'] = LabPanel::withoutGlobalScopes()->firstOrCreate(
-                ['user_id' => $request->user()->id, 'client_id' => $data['lab_order_id']],
-                [
-                    'lab_order_id' => $data['lab_order_id'],
-                    'collected_at' => $data['sampled_at'] ?? null,
-                    'source' => 'manual',
-                ],
-            )->id;
-        }
+        $data = $this->withPanel($data, $request);
 
         $result = LabResult::create($data);
         AuditService::log('create', $result, null, $data);
@@ -82,10 +71,30 @@ class LabResultController extends Controller
     public function update(StoreLabResultRequest $request, LabResult $labResult): LabResultResource
     {
         $old = $labResult->toArray();
-        $labResult->update($request->validated());
+        $labResult->update($this->withPanel($request->validated(), $request));
         AuditService::log('update', $labResult, $old, $labResult->toArray());
 
         return new LabResultResource($labResult->load('testDefinition'));
+    }
+
+    /**
+     * Same panel key as LabResultImporter::resolvePanel(), but firstOrCreate: a manual
+     * row must not overwrite what an import recorded on the panel.
+     */
+    private function withPanel(array $data, Request $request): array
+    {
+        if (filled($data['lab_order_id'] ?? null)) {
+            $data['lab_panel_id'] = LabPanel::withoutGlobalScopes()->firstOrCreate(
+                ['user_id' => $request->user()->id, 'client_id' => $data['lab_order_id']],
+                [
+                    'lab_order_id' => $data['lab_order_id'],
+                    'collected_at' => $data['sampled_at'] ?? null,
+                    'source' => 'manual',
+                ],
+            )->id;
+        }
+
+        return $data;
     }
 
     public function destroy(LabResult $labResult): JsonResponse
