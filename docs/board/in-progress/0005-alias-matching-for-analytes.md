@@ -39,7 +39,7 @@ this card's second visit.
       definition lacks, THE APP SHALL backfill that id, as it already does on a slug match.
 - [x] #4 IF an analyte matches neither an id, a slug, nor an alias, THEN THE APP SHALL still
       create an uncurated definition rather than dropping the row.
-- [ ] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
+- [x] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
       definition, THE APP SHALL give them the same `test_key` so they trend as one series.
 <!-- AC:END -->
 
@@ -149,3 +149,31 @@ VERDICT: defect
 user already logged "Cholesterol" by hand, the auto-created `cholesterol` definition shadows the new
 alias on `Serum cholesterol` and the two series stay split. No test builds that case. Also still
 open: the `matchAlias()` docblock and `docs/HANDOVER.md` still say "53 rows" / "50 of the 53".
+
+**2026-09-28** RESULT: done
+TESTS: +1 new, all green
+TOUCHED: app/Models/LabTestDefinition.php
+TOUCHED: tests/Feature/LabResultImportTest.php
+TOUCHED: docs/HANDOVER.md
+TOUCHED: docs/DATA-MODEL.md
+TOUCHED: docs/board/in-progress/0005-alias-matching-for-analytes.md
+OUT-OF-SCOPE: none
+
+Closed the shadowing finding behind the reopened #5. New test
+`test_an_older_auto_created_slug_does_not_shadow_a_seeded_alias` creates an uncurated `cholesterol`
+row, imports the PKB lipid payload, then posts a manual "Cholesterol". Watched it fail first:
+`test_key` came back `cholesterol`, not `serum-cholesterol`. The fix in `resolveForImport()`: a
+slug hit wins only when its row is curated; otherwise the alias lookup runs first and the
+uncurated slug row is the fallback. This stays inside step 2 of the documented order (slug or
+aliases), so the id-first match order is unchanged.
+
+Counts checked in an in-memory DB: 52 definitions, 49 with aliases. The review was right. The
+docblock, `HANDOVER.md` and `DATA-MODEL.md` now say 52 / 49 (and "6 of the 52", "other 46").
+
+Not done, and not this visit: results already stored under the old auto-created `test_key` are not
+rewritten, and the orphan uncurated row stays. New entries join the seeded series; old ones stay
+split until a merge pass, which the Plan puts on this card's second visit after 0001. The review's
+scope finding (about 120 guessed aliases all written `is_curated => true`) is still Rob's call; this
+entry does not change the seeded aliases. Not browser-checked: Herd serves `C:\Dev\BioTracker`.
+Suite: 16 passed, 77 assertions. Pint passes on the model; the test file fails `concat_space` at
+HEAD already, as the first entry says.

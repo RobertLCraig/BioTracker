@@ -59,7 +59,10 @@ class LabTestDefinition extends Model
         // comparison, so "  serum CHOLESTEROL " and "Serum cholesterol" match.
         $slug = Str::slug($name) ?: 'unknown';
 
-        $byName = static::where('slug', $slug)->first() ?? static::matchAlias($slug);
+        // A curated alias outranks an auto-created row with the same slug: that row is
+        // what an unmatched name left behind before the alias was seeded.
+        $bySlug = static::where('slug', $slug)->first();
+        $byName = ($bySlug?->is_curated ? $bySlug : null) ?? static::matchAlias($slug) ?? $bySlug;
         if ($byName) {
             // Backfill the PKB id onto a curated seed the first time we see it.
             if ($pkbTypeId && ! $byName->pkb_type_id) {
@@ -84,7 +87,7 @@ class LabTestDefinition extends Model
      *
      * ponytail: scans the catalog in PHP because `aliases` is a JSON column and the
      * comparison is on the slug, not the stored text — no portable SQL does that. The
-     * catalog is seeded reference data (53 rows), so this is one small query. If it ever
+     * catalog is seeded reference data (52 rows), so this is one small query. If it ever
      * grows past a few hundred rows, store the slugged alias in its own indexed table.
      */
     private static function matchAlias(string $slug): ?self

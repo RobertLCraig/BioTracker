@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-08-29 (card 0006 rewrote the board's cards for the reader)_
+_Last updated: 2026-09-28 (card 0005: a curated alias outranks an older auto-created slug)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -23,7 +23,7 @@ undocumented — their shape is only in `database/migrations/`, and that gap is 
 `DATA-MODEL.md`.
 
 The lab shape in one paragraph, so a session need not open either doc to orient:
-`lab_test_definitions` is a shared, seeded analyte catalog (53 rows, not user-owned) that gives
+`lab_test_definitions` is a shared, seeded analyte catalog (52 rows, not user-owned) that gives
 canonical naming and grouping; `lab_panels` is one lab order, never entered by hand but inferred
 and upserted from the `lab_order_id` carried by incoming results; `lab_results` is the atomic
 measurement, holding the lab's own as-reported name, value, unit and reference range. The catalog
@@ -33,11 +33,13 @@ entries. `abnormal_flag` is always **derived** from value against range, because
 (its portal computes it client-side).
 
 Two known divergences from that shape are still open, each a bug to close rather than a state to
-preserve: only 6 of the 53 seeded definitions carry a `pkb_type_id`, and the design doc still calls
+preserve: only 6 of the 52 seeded definitions carry a `pkb_type_id`, and the design doc still calls
 the importer `PkbTestJsonImporter` when the class is `PkbTestImportService`. Both are written up in
 [DATA-MODEL.md](DATA-MODEL.md#known-divergences-to-close). The third, the dead `aliases` fallback,
 is closed: card 0005 gave `resolveForImport()` an alias lookup between the slug match and the
-auto-create, and seeded aliases on 50 of the 53 rows.
+auto-create, and seeded aliases on 49 of the 52 rows. A curated alias outranks an older
+auto-created row holding the same slug, so a name logged before its alias was seeded rejoins the
+seeded series; results already stored under that old `test_key` are not rewritten.
 
 ## Architecture / stack
 Laravel 12 on PHP 8.2+ (Herd), SQLite in dev, queue driver `sync` in dev. API-first: every feature
@@ -61,7 +63,7 @@ app/Services/Lab/
   LabResultImporter.php      shared persistence: panel upsert + dedup on external_id
   LabResultParser.php        best-effort paste parser, preview only, never persists
 app/Http/Controllers/Api/V1/   LabResult / LabPanel / LabImport controllers
-database/seeders/LabTestDefinitionSeeder.php   the 53 seeded analytes
+database/seeders/LabTestDefinitionSeeder.php   the 52 seeded analytes
 routes/api.php         note lines 74-79: the specific lab routes are declared BEFORE the
                        apiResource, or /lab-results/trends is swallowed by {lab_result}
 resources/js/views/    one view per domain, all registered in router/index.js
@@ -89,7 +91,7 @@ and work now lives on the board rather than in prose.
   and batch import). Phase 6 is on `master` too: three tables, three models, the
   matcher, the seeder, the PKB JSON importer, the queued import job, manual CRUD, the paste
   parser and its preview endpoint, the trends endpoint, a lab section in the CSV and PDF report,
-  the SPA view, and its feature tests. The whole suite is green (15 passing). It has been
+  the SPA view, and its feature tests. The whole suite is green (16 passing). It has been
   verified end to end against one real captured lipid panel: 1 panel and 6 results created, re-import idempotent,
   out-of-range flags matching the portal, comments encrypting and decrypting, trends returning a
   numeric series, the PDF rendering its lab section.
@@ -139,8 +141,8 @@ the world before that. Read the card before acting on it.
 # PHP is not on PATH; Herd's is the one the tests were run with
 PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 
-"$PHP" artisan test                      # expect: 15 passed (75 assertions)
-"$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 53 analytes
+"$PHP" artisan test                      # expect: 16 passed (77 assertions)
+"$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 52 analytes
 "$PHP" artisan route:list --path=lab     # expect: the 5 lab route groups from routes/api.php
 
 ls docs/board/todo docs/board/in-progress docs/board/human-review   # the whole live picture
