@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useApi } from '@/composables/useApi';
-import { loadPanels, groupResults } from '@/labs';
+import { loadResults, loadPanels, groupResults } from '@/labs';
 import { Line } from 'vue-chartjs';
 import {
     Chart as ChartJS,
@@ -14,7 +14,6 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const { get, postForm } = useApi();
 
 const results  = ref([]);
-const total    = ref(0);      // server-side total; the index pages at 50
 const panels   = ref({});     // id → panel
 const series   = ref([]);     // analyte picker options
 const trend    = ref(null);   // the selected analyte's series
@@ -68,12 +67,11 @@ const groups = computed(() => groupResults(results.value, panels.value));
 
 async function load() {
     loading.value = true;
-    const [res, ser] = await Promise.all([
-        get('/lab-results'),
+    const [rows, ser] = await Promise.all([
+        loadResults(get),
         get('/lab-results/trends'),
     ]);
-    results.value = res.data.data;
-    total.value = res.data.meta?.total ?? res.data.data.length;
+    results.value = rows;
     panels.value = await loadPanels(get, results.value.map(r => r.lab_panel_id));
     series.value = ser.data.data.series;
     loading.value = false;
@@ -238,9 +236,6 @@ onMounted(load);
       </div>
 
       <!-- Results, newest panel first -->
-      <p v-if="total > results.length" class="text-xs text-zinc-500 mb-3">
-        Showing the newest {{ results.length }} of {{ total }} results.
-      </p>
       <div v-for="g in groups" :key="g.id" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden mb-5">
         <div class="flex items-baseline justify-between gap-3 px-4 py-3 border-b border-zinc-800">
           <p class="text-sm font-semibold text-zinc-200 truncate">{{ g.title }}</p>

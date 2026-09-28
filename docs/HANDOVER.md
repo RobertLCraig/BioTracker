@@ -94,8 +94,8 @@ and work now lives on the board rather than in prose.
   numeric series, the PDF rendering its lab section.
 - **In progress:** nothing half-built. The tree is clean and the branch is coherent.
 - **Known bugs / broken:** none open. The known shortfalls are scope rather than defects: the demo
-  seeder writing no lab data so `/labs` on the demo account only ever shows its empty state, and
-  the labs list stopping at the API's 50-row page (it says so on screen, but does not page).
+  seeder writing no lab data so `/labs` on the demo account only ever shows its empty state. The
+  labs list now walks every API page; the index's missing sort tie-break is card 0007.
 
 ## What's next (in order)
 Card **0006** (rewrite the board's cards for the reader) is built on branch `card/0006` with all
@@ -146,7 +146,7 @@ ls docs/board/todo docs/board/in-progress docs/board/human-review   # the whole 
 git log --format='%ad %s%n%b' --date=short -5                       # the narrative
 ```
 JS helpers behind `LabsView.vue` live in `resources/js/labs.js` and are tested with Node's own
-runner, outside the PHP suite: `node --test tests/js/labs.test.mjs` (expect: 4 pass).
+runner, outside the PHP suite: `node --test tests/js/labs.test.mjs` (expect: 6 pass).
 Frontend: `npm run build`, or `composer run dev` to run Laravel, Vite, the queue and logs together.
 Sign in with the seeded demo account named in `README.md`.
 
