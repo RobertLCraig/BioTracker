@@ -45,7 +45,7 @@ everything the card knows and changes only how it is ordered and said. `## Direc
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [x] #1 WHEN a card in a non-terminal lane is rewritten, THE CARD SHALL state the problem in
+- [ ] #1 WHEN a card in a non-terminal lane is rewritten, THE CARD SHALL state the problem in
       `## Why` before any solution appears anywhere in it. proves: none - about prose, and no check
       here reads prose
 - [x] #2 WHEN a rewritten card is a decision, THE CARD SHALL say which of the four reasons makes it
@@ -210,3 +210,10 @@ VERDICT: defect
 
 
 **2026-08-29** The reviewer returned this card and its finding is the last review entry at the bottom of ## Direction. The loop moved it from todo/ to human-review/ because it has bounced 1 time between todo and ai-review, all 6 criteria ticked. THE BUILDER COULD NOT ACT ON THAT FINDING. A reviewer never unticks a criterion - it is forbidden from editing acceptance at all - so the card came back with 6 of 6 criteria still ticked, every session found nothing open to do, and the loop promoted it again on the boxes. Untick what the reviewer disproved and move it back to todo/, or say here why the finding is wrong.
+
+**2026-09-28** Manager pass: reopened #1 because the review's finding still holds:
+`todo/0002-merge-lab-results-branch.md` opens with `## What I need from you` and its
+recommendation ("merge now") above `## Why`, and the README scopes ask-first to `human-review/`
+only, so nothing forces that order on a `todo/` card. Also still open from the breakage review:
+bare `0001` mentions remain in 0002's `## Options` and 0001's `## Tasks`, which the `card NNNN`
+respelling missed.
