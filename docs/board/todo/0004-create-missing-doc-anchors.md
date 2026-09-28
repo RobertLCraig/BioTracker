@@ -17,17 +17,17 @@ agreed. Where a source is missing, mark the gap loudly rather than filling it.
 <!-- AC:BEGIN -->
 - [x] #1 WHEN a fresh session opens the repo, THE REPO SHALL auto-load a root `CLAUDE.md` whose
       first instruction is to read `docs/HANDOVER.md` before changing anything.
-- [x] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
+- [ ] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
       carrying the three lab tables from the design doc §2 plus the pre-existing log tables, with
       one home per field rather than a copy in each doc.
-- [x] #3 WHEN an agent asks why something was built a given way, THE REPO SHALL provide
+- [ ] #3 WHEN an agent asks why something was built a given way, THE REPO SHALL provide
       `docs/DECISIONS.md` holding at least D1 to D4 from the design doc §8 and the architecture
       choices table from `docs/build/PROJECT_STATUS.md`, each with its reason.
-- [x] #4 WHEN an agent needs the goal and success criteria, THE REPO SHALL provide `docs/PRD.md`,
+- [ ] #4 WHEN an agent needs the goal and success criteria, THE REPO SHALL provide `docs/PRD.md`,
       and `docs/HANDOVER.md` SHALL link it in one line rather than restating it.
 - [x] #5 WHEN the doc set is complete, THE REPO SHALL have every relative markdown link resolve to
       a file that exists.
-- [x] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
+- [ ] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
       endpoints from the design doc §6 alongside the other domains, which it currently omits.
 <!-- AC:END -->
 
@@ -191,3 +191,77 @@ Left as the review found it, because only Rob can call it: whether moving the §
 of the design doc was over the fence (the scope finding). The `docs/board/README.md` example links
 that do not resolve are skill-owned and unchanged. `board:convention` would not run against this
 worktree ("no board ... under C:\Dev"), so 0008 has not been checked by it.
+
+### 2026-09-28 review (v20260928192952-b7af)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 19s, run by this job rather than reported by the card.
+
+**acceptance: defect**
+
+**Verdict: defect. Criterion #2 is still not met.**
+
+I checked each criterion against the code.
+
+- **#1 (root `CLAUDE.md`):** Met. Its first instruction is to read `docs/HANDOVER.md`.
+- **#2 (canonical data shape):** `docs/DATA-MODEL.md` is now correct.
+  - `LabResultImporter::resolvePanel()` sets `client_id` to the `lab_order_id`, as the doc says.
+  - `PkbTestImportService::mapDataPoint()` builds its sha1 from three parts, as the doc says.
+  - `LabResultController::store()` writes no `external_id`, as the doc says.
+  - But the dedup rule still has a second home, and that copy is wrong. `docs/spec/lab-results-design.md` §4 "Dedup & idempotency" still says a panel's `client_id` is "the min `external_id` of its results". It also still gives the `sha1(user_id | test_key | sampled_at | value_text | lab_order_id)` rule for manual and paste entries. No code does either.
+  - §4 does not link to `DATA-MODEL.md`. The "Known divergences" list names the stale class name in §3a and §9, but not §4.
+  - The design doc says the importer is built, so a reader can take §4 as current. This is the same false rule the last review found. It has only moved to a different section.
+- **#3 (`docs/DECISIONS.md`):** Met. It holds D1 to D4 and the architecture table, each with its reason.
+- **#4 (`docs/PRD.md`):** Met. The handover links it in one line.
+  - Small problem: "Open questions" in `PRD.md` still names `feat/lab-results`, and that branch is gone.
+- **#5 (links):** Met. The only two links that do not resolve are the example links in `docs/board/README.md`. Those are not real links.
+- **#6 (`README.md`):** Met. It lists all ten lab endpoints, and they match `routes/api.php`.
+
+UNMET: #2 `docs/spec/lab-results-design.md` §4 still has a second copy of the dedup keys that is wrong, with no link and no divergence note: panel `client_id` = "min external_id" and a manual/paste `sha1(user_id|...|lab_order_id)` that no code writes.
+
+VERDICT: defect
+
+**scope: defect**
+
+The builder's fixes hold up. The design doc now says "built", and the false dedup rule is gone from `DATA-MODEL.md`. Two scope problems are left.
+
+**Half done.** In `docs/PRD.md`, under "Open questions", one item is still open: "Whether to merge `feat/lab-results` now or hold it ... board card 0002". That branch is gone. `git branch -a` shows only `master`. Phase 6 is on `master`. The builder fixed the same stale branch in `docs/HANDOVER.md` ("Branch status" and "Blockers") but not in the PRD. The first review flagged this line as a nit, and it is still there. So the PRD asks a question that was answered on 2026-08-16 as if it were still open.
+
+**Over the fence, still not settled.** The card says to leave the design doc's section 2 in place and only link to it. But section 2 of `docs/spec/lab-results-design.md` lost its field tables, enum block and flag rule. Acceptance #2 ("one home per field") pulls the other way, and the builder left it for Rob. I do not call it a defect alone. Rob can revert it with one edit if he wants the tables back.
+
+**Beyond the ask.** `docs/HANDOVER.md` was rewritten well past the two sections the card named. The builder declared and measured every change. Nothing in it is false.
+
+**What to do now.** Delete or close that one line in the PRD.
+
+UNMET: #4 `docs/PRD.md` "Open questions" still lists the merge of the removed `feat/lab-results` branch as open, so the goal doc says something false about the project's state.
+
+VERDICT: defect
+
+**breakage: defect**
+
+I checked the fixed data-model claims against the code, and they now hold. But I found one new break.
+
+**1. The paste path is described in three different ways.**
+- `docs/DATA-MODEL.md`, section "Dedup keys", says a confirmed paste goes through `POST /lab-results`.
+- `docs/DECISIONS.md`, entry D4, says that after the user confirms, "`/import` persist[s]".
+- `README.md`, the "Lab / Test Results" table, says `/lab-results/import` takes a "PKB JSON upload or confirmed paste".
+- The code has only one import handler, `LabImportController::pkb()`, and it has no paste input. So the D4 text and the README row are false.
+- A next session that follows D4 or the README will try to send pasted rows to `/import`. That is how the docs contradict themselves.
+
+**2. A stale line in a new doc.** `docs/PRD.md`, "Open questions", still asks whether to merge `feat/lab-results`. That branch does not exist now. `docs/HANDOVER.md`, "Branch status", says it is gone.
+
+The `lab_panels.client_id` row and the sha1 rule now match the code: `LabResultImporter::resolvePanel()` and `PkbTestImportService::mapDataPoint()`. The design doc's "Status" line now says "built".
+
+UNMET: #3 D4 in DECISIONS.md says confirmed paste rows persist through `/import`, but `LabImportController::pkb()` only takes a PKB file.
+UNMET: #6 README.md says `/lab-results/import` takes a "confirmed paste", but no paste input exists on that endpoint.
+
+VERDICT: defect
+
+**acceptance**
+
+- **#2 reopened**, by the acceptance lens: `docs/spec/lab-results-design.md` §4 still has a second copy of the dedup keys that is wrong, with no link and no divergence note: panel `client_id` = "min external_id" and a manual/paste `sha1(user_id|...|lab_order_id)` that no code writes.
+- **#4 reopened**, by the scope lens: `docs/PRD.md` "Open questions" still lists the merge of the removed `feat/lab-results` branch as open, so the goal doc says something false about the project's state.
+- **#3 reopened**, by the breakage lens: D4 in DECISIONS.md says confirmed paste rows persist through `/import`, but `LabImportController::pkb()` only takes a PKB file.
+- **#6 reopened**, by the breakage lens: README.md says `/lab-results/import` takes a "confirmed paste", but no paste input exists on that endpoint.
+
