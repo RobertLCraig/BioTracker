@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-09-28 (card 0005: a curated alias outranks an older auto-created slug)_
+_Last updated: 2026-09-28 (card 0005: a curated alias outranks an older auto-created row, by slug or by PKB id)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -39,7 +39,9 @@ the importer `PkbTestJsonImporter` when the class is `PkbTestImportService`. Bot
 is closed: card 0005 gave `resolveForImport()` an alias lookup between the slug match and the
 auto-create, and seeded aliases on 49 of the 52 rows. A curated alias outranks an older
 auto-created row holding the same slug, so a name logged before its alias was seeded rejoins the
-seeded series; results already stored under that old `test_key` are not rewritten.
+seeded series. When such an old row holds the incoming `pkb_type_id`, the id moves to the curated
+definition the name reaches, so imports follow manual entries onto one series. Results already
+stored under the old `test_key` are not rewritten.
 
 ## Architecture / stack
 Laravel 12 on PHP 8.2+ (Herd), SQLite in dev, queue driver `sync` in dev. API-first: every feature
@@ -91,7 +93,7 @@ and work now lives on the board rather than in prose.
   and batch import). Phase 6 is on `master` too: three tables, three models, the
   matcher, the seeder, the PKB JSON importer, the queued import job, manual CRUD, the paste
   parser and its preview endpoint, the trends endpoint, a lab section in the CSV and PDF report,
-  the SPA view, and its feature tests. The whole suite is green (16 passing). It has been
+  the SPA view, and its feature tests. The whole suite is green (17 passing). It has been
   verified end to end against one real captured lipid panel: 1 panel and 6 results created, re-import idempotent,
   out-of-range flags matching the portal, comments encrypting and decrypting, trends returning a
   numeric series, the PDF rendering its lab section.
@@ -101,14 +103,10 @@ and work now lives on the board rather than in prose.
   labs list now walks every API page; the index's missing sort tie-break is card 0007.
 
 ## What's next (in order)
-Card **0006** (rewrite the board's cards for the reader) is built on branch `card/0006` with all
-six criteria met and the suite green, waiting on the scheduler's merge. The board now reports
-**0 of 6 open cards off convention**, measured with
-`php C:\Dev\ProgressBoard\artisan board:convention --path=<the tree you are in>`. Re-run that after
+Card **0005** (alias matching) is in `in-progress/` with all five criteria met, waiting on the
+scheduler to move it to review. Cards **0006**, **0007** and **0008** are in `todo/`. Check the
+board with `php C:\Dev\ProgressBoard\artisan board:convention --path=<the tree you are in>` after
 writing any new card: it is the board's own check and it prints a total, not a list.
-
-Nothing is queued behind it. The remaining open cards all wait on Rob, not on an agent — see
-Blockers below.
 
 The queue is [board/todo/](board/todo/), one card per file.
 
@@ -117,19 +115,15 @@ opened in a browser — Herd serves the SPA from `C:\Dev\BioTracker`, not from t
 built in. Run `/run` against it before trusting it.
 
 ## Blockers / open questions
-Four cards sit in [board/human-review/](board/human-review/) and all four need Rob rather than an
+Two cards sit in [board/human-review/](board/human-review/) and both need Rob rather than an
 agent:
 - **0001** the full PKB capture. It needs his logged-in portal session, so no agent can do it, and
   until it lands Phase 6 is verified against six results.
-- **0003** the SPA Lab Results view, which needs the browser check no worktree can do.
-- **0004** the doc anchors and **0005** alias matching. Both were built, both bounced once through
-  review, and both came back with every criterion still ticked because a reviewer may not untick
-  one. Each carries the reviewer's findings at the bottom of its thread and a loop message asking
-  Rob to untick what was disproved or say why the finding is wrong.
+- **0004** the doc anchors. It was built, bounced once through review, and came back with every
+  criterion still ticked because a reviewer may not untick one.
 
-**None of the four carries a `## What I need from you` section**, so the ask on each is buried at
-the bottom of a long thread. Card 0006 named that gap and left it: it is the readiness check rather
-than one of the six convention checks, and it is worth its own card.
+Card 0005 carries one open call for Rob: its seeded aliases (about 120, all written
+`is_curated => true`) were twice flagged by review as wider than "the obvious variants".
 
 **0002** (merge the lab-results branch or hold it for 0001) is still in [board/todo/](board/todo/)
 and was answered on 2026-08-16 ("merge now"). The branch it names no longer exists: Phase 6 and the
@@ -141,7 +135,7 @@ the world before that. Read the card before acting on it.
 # PHP is not on PATH; Herd's is the one the tests were run with
 PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 
-"$PHP" artisan test                      # expect: 16 passed (77 assertions)
+"$PHP" artisan test                      # expect: 17 passed (81 assertions)
 "$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 52 analytes
 "$PHP" artisan route:list --path=lab     # expect: the 5 lab route groups from routes/api.php
 

@@ -48,21 +48,34 @@ class LabTestDefinition extends Model
         string $name,
         ?string $unit = null,
     ): self {
+        // Slugging folds case and surrounding whitespace away on both sides of the
+        // comparison, so "  serum CHOLESTEROL " and "Serum cholesterol" match.
+        $slug = Str::slug($name) ?: 'unknown';
+
         if ($pkbTypeId !== null && $pkbTypeId !== '') {
             $byId = static::where('pkb_type_id', $pkbTypeId)->first();
+            if ($byId?->is_curated) {
+                return $byId;
+            }
+
+            // An auto-created row holding the id was left by an import before the alias
+            // was seeded. Hand the id to the curated definition the name now reaches, so
+            // imports and manual entries share one series.
+            $curated = $byId ? static::matchCurated($slug) : null;
+            if ($curated && ! $curated->pkb_type_id) {
+                $byId->update(['pkb_type_id' => null]);
+                $curated->update(['pkb_type_id' => $pkbTypeId, 'code_system' => $codeSystem]);
+
+                return $curated;
+            }
             if ($byId) {
                 return $byId;
             }
         }
 
-        // Slugging folds case and surrounding whitespace away on both sides of the
-        // comparison, so "  serum CHOLESTEROL " and "Serum cholesterol" match.
-        $slug = Str::slug($name) ?: 'unknown';
-
         // A curated alias outranks an auto-created row with the same slug: that row is
         // what an unmatched name left behind before the alias was seeded.
-        $bySlug = static::where('slug', $slug)->first();
-        $byName = ($bySlug?->is_curated ? $bySlug : null) ?? static::matchAlias($slug) ?? $bySlug;
+        $byName = static::matchCurated($slug) ?? static::where('slug', $slug)->first();
         if ($byName) {
             // Backfill the PKB id onto a curated seed the first time we see it.
             if ($pkbTypeId && ! $byName->pkb_type_id) {
@@ -80,6 +93,12 @@ class LabTestDefinition extends Model
             'default_unit' => $unit ?: null,
             'is_curated' => false,
         ]);
+    }
+
+    /** The curated definition $slug names, by its own slug or else by an alias. */
+    private static function matchCurated(string $slug): ?self
+    {
+        return static::where('slug', $slug)->where('is_curated', true)->first() ?? static::matchAlias($slug);
     }
 
     /**
