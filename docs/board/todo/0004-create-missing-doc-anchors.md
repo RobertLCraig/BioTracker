@@ -153,3 +153,10 @@ VERDICT: defect
 
 
 **2026-08-29** The reviewer returned this card and its finding is the last review entry at the bottom of ## Direction. The loop moved it from todo/ to human-review/ because it has bounced 1 time between todo and ai-review, all 6 criteria ticked. THE BUILDER COULD NOT ACT ON THAT FINDING. A reviewer never unticks a criterion - it is forbidden from editing acceptance at all - so the card came back with 6 of 6 criteria still ticked, every session found nothing open to do, and the loop promoted it again on the boxes. Untick what the reviewer disproved and move it back to todo/, or say here why the finding is wrong.
+
+**2026-09-28** Manager pass: reopened #2 because the review's breakage finding still holds:
+`docs/DATA-MODEL.md` still says a panel's `client_id` is "the lowest `external_id` of its results",
+but `LabResultImporter::resolvePanel()` sets it to the `lab_order_id`, and its "Dedup keys" section
+still gives a `sha1(user_id | test_key | ...)` rule no code writes (the only sha1 is in
+`PkbTestImportService::mapDataPoint()`, with different parts). Also still open:
+`docs/spec/lab-results-design.md` still reads "Status: **design-spec** (no code yet)".
