@@ -19,7 +19,7 @@ by a move.
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [ ] #1 WHEN a lab result is updated with a `lab_order_id`, THE API SHALL attach it to that user's
+- [x] #1 WHEN a lab result is updated with a `lab_order_id`, THE API SHALL attach it to that user's
       panel for the order, creating the panel if none exists.
       proves: `test_manual_update_with_order_id_moves_to_its_panel`
 <!-- AC:END -->
@@ -30,3 +30,19 @@ by a move.
 - [ ] In `LabResultController::update()`, resolve the panel the way `store()` does (card 0008).
 
 ## Comments
+**2026-09-28**
+RESULT: done
+TESTS: +1 new, all green
+TOUCHED: app/Http/Controllers/Api/V1/LabResultController.php
+TOUCHED: tests/Feature/LabResultImportTest.php
+TOUCHED: docs/HANDOVER.md (the seam note and the expected test count)
+TOUCHED: docs/board/in-progress/0009-lab-result-update-drops-lab-order-id.md
+OUT-OF-SCOPE: none
+
+The new test failed first with "lab_order_id was dropped on update: the result joined no panel".
+The panel lookup from `store()` moved into a private `withPanel()`, and `update()` now calls it too.
+`store()` keeps the same behaviour (`test_manual_result_with_order_id_joins_its_panel` still green);
+only its code moved, so there is one key for both paths. An update without `lab_order_id` leaves
+the panel as it was, as before. Pint `--test` flags `concat_space` and `!` spacing in both files,
+but the same flags are on the files before this change; the repo-wide reformat is Rob's call.
+No browser check: this is an API change and Herd serves `C:\Dev\BioTracker`.
