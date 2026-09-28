@@ -271,3 +271,63 @@ alias can take a PKB id from an older row. Not browser-checked: Herd serves `C:\
 Suite: 17 passed, 81 assertions. Pint passes on the model; the test file fails only `concat_space`,
 at HEAD already.
 
+### 2026-09-28 review (v20260928200654-f8f8)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 30s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I checked the model: `app/Models/LabTestDefinition.php`. Each criterion traces to real code.
+
+- **#1 alias match:** `resolveForImport()` calls `matchCurated()`. That calls `matchAlias()` before the final `create()`.
+- **#2 case and spaces:** `resolveForImport()` slugs the incoming name. `matchAlias()` slugs each stored alias. So the match is slug against slug.
+- **#3 backfill:** after a name or alias match, `resolveForImport()` runs the `pkb_type_id` backfill on `$byName`.
+- **#4 no match:** the last `static::create([... 'is_curated' => false])` in `resolveForImport()` still runs.
+- **#5 one series:** three cases now go to the curated row:
+  - An old uncurated row that holds the same slug.
+  - An old uncurated row that holds the incoming PKB id. The id moves to the curated row.
+  - A manual entry with no id. It goes through `matchCurated()`.
+
+  `LabResultController::store()` and `PkbTestImportService` both set `test_key` from the slug of the row that comes back.
+
+I tried to break #5. One case stays split: the curated row already holds a different PKB id. That is two ids for one name, and the code returns the old row on purpose. The criterion only covers names that "resolve to one definition", and this case does not. So it does not disprove #5.
+
+A PKB name that matches no alias also stays split. That is alias curation. The card gives that work to card 0001.
+
+The suite is green.
+
+VERDICT: sound
+
+**scope: defect**
+
+I found three scope problems. None of them breaks an acceptance criterion.
+
+1. **`docs/HANDOVER.md` has false text again, in section "What's next (in order)".** It says card 0005 "is in `in-progress/` ... waiting on the scheduler to move it to review". But the card is in `ai-review/` now. The card's Tasks ask for no HANDOVER work. The build agent writes its own status into the first file each session reads. Two reviews already flagged this pattern.
+
+2. **The code now moves data between rows. The card did not ask for this.** `LabTestDefinition::resolveForImport()` now takes `pkb_type_id` off an auto-created row and puts it on a curated row. "Not this card" says: do not backfill `pkb_type_id` by hand, and do the merge pass on the second visit. This move is part of that merge pass, built early. It does it only half: the old results keep their old `test_key`.
+
+3. **The guessed aliases are still there.** `LabTestDefinitionSeeder::run()` seeds about 120 aliases. Each row is written as curated (`is_curated => true`). Guesses such as "GFR calculated abbreviated MDRD" are the curation work that card 0001 owns. Point 2 makes this worse, because a wrong guess can now take a PKB id away from an existing row.
+
+No criterion is disproved, so there are no UNMET lines.
+
+VERDICT: defect
+
+**breakage: sound**
+
+I tried to break the latest change and I could not. No acceptance criterion is disproved.
+
+**What I checked**
+
+- **Id hit on an old auto-made row.** `LabTestDefinition::resolveForImport()` now calls `matchCurated()` with the incoming name. If the name reaches a curated row that has no id, the id moves to that row, so imports and manual entries share one `test_key`. The old id is cleared first, so the unique `pkb_type_id` index does not fail.
+- **The curated row already has a different id.** The old row is kept on purpose. The card says so. This is not a silent split.
+- **A seeder re-run after an id move.** `LabTestDefinitionSeeder::run()` writes `pkb_type_id => null` on the 46 rows it seeds without an id. That clears a moved id. But the old auto-made row lost its id in the move too. The next import finds no row by id, so it matches the curated row by name and puts the id back. The series stays one line.
+- **Aliases on auto-made rows.** Auto-made rows are created without aliases, so `matchAlias()` can only return a seeded, curated row.
+- **The docblock on `resolveForImport()`.** It says "PKB id → name slug/aliases → auto-create", and the code still follows that order. The comment on `matchAlias()` now says 52, which is correct.
+- **Callers.** `LabResultController::store()` and `PkbTestImportService` are unchanged. Both still take `test_key` from the slug of the row that comes back.
+
+Old results keep their old `test_key` until the merge pass. The card defers that pass on purpose, so it is not a break.
+
+VERDICT: sound
+
