@@ -107,5 +107,5 @@ endpoints, gamification reads, analytics, report export, and the integration end
 - [ ] **GAP — is this ever multi-user?** Every table is per-user and the isolation scope is
       zero-trust, but no sharing, clinician access or invite feature has been discussed.
 - [ ] **GAP — success metrics.** See above: no agreed numbers for performance, coverage or volume.
-- [ ] Whether to merge `feat/lab-results` now or hold it for the full PKB capture — board card
-      0002, which carries three options and a recommendation.
+- [x] Whether to merge `feat/lab-results` now or hold it for the full PKB capture (card 0002).
+      Answered 2026-08-16, "merge now"; Phase 6 is on `master` and the branch is gone.

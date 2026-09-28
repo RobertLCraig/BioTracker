@@ -150,15 +150,9 @@ This is the canonical import.
 ---
 
 ## 4. Dedup & idempotency
-Follows the existing batch-import pattern (`client_id` columns added in
-`2026_03_10_200000_add_client_id_to_log_tables`).
-- **PKB JSON (primary):** each result's `external_id` = PKB datapoint `id` (globally unique,
-  stable). A panel's `client_id` = the min `external_id` of its results. Re-importing the
-  same file is a no-op; a result whose `status` advanced (`final → corrected`, or `deleted`)
-  is updated in place.
-- **Manual / paste (no PKB id):** synthesise
-  `external_id = sha1(user_id | test_key | sampled_at | value_text | lab_order_id)`.
-This makes re-import, paste-twice, and overlapping captures safe.
+The dedup keys as built are in [../DATA-MODEL.md](../DATA-MODEL.md#dedup-keys), their one home.
+The pre-code rules this section used to hold (a panel keyed on the min `external_id`, a
+synthesised sha1 for manual and paste) were never built.
 
 ---
 

@@ -148,7 +148,7 @@ All endpoints are prefixed with `/api/v1/`. Protected routes require `Authorizat
 | GET    | `/lab-panels`               | List orders/panels with nested results |
 | GET    | `/lab-panels/{id}`          | One panel + its results  |
 | POST   | `/lab-results/parse`        | Paste from PKB → parsed preview, never writes |
-| POST   | `/lab-results/import`       | PKB JSON upload or confirmed paste → queued import |
+| POST   | `/lab-results/import`       | PKB JSON `file` upload or inline `payload` → import (queued over 2 MB) |
 
 ### Gamification
 | Method | Endpoint                    | Description              |
