@@ -17,7 +17,7 @@ agreed. Where a source is missing, mark the gap loudly rather than filling it.
 <!-- AC:BEGIN -->
 - [x] #1 WHEN a fresh session opens the repo, THE REPO SHALL auto-load a root `CLAUDE.md` whose
       first instruction is to read `docs/HANDOVER.md` before changing anything.
-- [ ] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
+- [x] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
       carrying the three lab tables from the design doc §2 plus the pre-existing log tables, with
       one home per field rather than a copy in each doc.
 - [x] #3 WHEN an agent asks why something was built a given way, THE REPO SHALL provide
@@ -160,3 +160,34 @@ but `LabResultImporter::resolvePanel()` sets it to the `lab_order_id`, and its "
 still gives a `sha1(user_id | test_key | ...)` rule no code writes (the only sha1 is in
 `PkbTestImportService::mapDataPoint()`, with different parts). Also still open:
 `docs/spec/lab-results-design.md` still reads "Status: **design-spec** (no code yet)".
+
+**2026-09-28**
+RESULT: done
+TESTS: +0 new, all green (15 tests, 75 assertions, `.\vendor\bin\phpunit.bat`)
+TOUCHED: docs/DATA-MODEL.md, docs/HANDOVER.md, docs/spec/lab-results-design.md, docs/board/in-progress/0004-create-missing-doc-anchors.md, docs/board/todo/0008-manual-lab-result-drops-lab-order-id.md
+OUT-OF-SCOPE: 0008
+
+Fixed what the review disproved in #2, each line checked against the code, not the design doc:
+- `lab_panels.client_id` now says it is the `lab_order_id`, per `LabResultImporter::resolvePanel()`.
+- "Dedup keys": the only sha1 is PKB's fallback for a datapoint with no `id`, written with its
+  real three parts from `PkbTestImportService::mapDataPoint()`. Manual entries have no dedup at all:
+  `LabResultController::store()` writes no `external_id` and no panel.
+- "One shape, three ingest paths" was also false and the review did not name it: only the PKB path
+  goes through `LabResultImporter`; manual calls `LabResult::create()`; paste only previews.
+  Rewritten to say so.
+
+`docs/HANDOVER.md` repeated the same false seam ("all three paths pass through
+`LabResultImporter`", "synthesised sha1 for manual/paste"), so I corrected that one paragraph and
+linked it to `DATA-MODEL.md#dedup-keys`. The design doc's header now reads "built", which closes the
+self-contradiction the review flagged.
+
+No test: no criterion on this card carries a `proves:`, and every change is markdown, so Pint had
+nothing to check. `.\vendor\bin\pest.bat` does not exist here; the suite ran under PHPUnit.
+
+Raised 0008: `StoreLabResultRequest` accepts `lab_order_id`, but `store()` drops it, so a manual or
+pasted result never joins its panel.
+
+Left as the review found it, because only Rob can call it: whether moving the §2 field tables out
+of the design doc was over the fence (the scope finding). The `docs/board/README.md` example links
+that do not resolve are skill-owned and unchanged. `board:convention` would not run against this
+worktree ("no board ... under C:\Dev"), so 0008 has not been checked by it.

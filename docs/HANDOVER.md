@@ -68,10 +68,11 @@ resources/js/views/    one view per domain, all registered in router/index.js
   LabsView.vue            card 0003: panel-grouped list, analyte trend chart, PKB upload
 docs/spec/, docs/build/, docs/board/
 ```
-The seams a fresh session should not re-derive: all three lab ingest paths normalise to one DTO
-and pass through `LabResultImporter`, so dedup, validation and audit live in exactly one place;
-dedup is on `external_id` (the PKB datapoint id, or a synthesised sha1 for manual/paste entries);
-and the route ordering note above is a real trap, not a style preference.
+The seams a fresh session should not re-derive: only the PKB JSON path goes through
+`LabResultImporter`, which dedups on `external_id` (the PKB datapoint id) and upserts panels on
+`lab_order_id`; manual entries go straight to `LabResult::create()` with no dedup (see
+[DATA-MODEL.md](DATA-MODEL.md#dedup-keys)); and the route ordering note above is a real trap, not
+a style preference.
 
 Every decision and its reasoning is in [DECISIONS.md](DECISIONS.md), newest first: the feature
 decisions D1 to D4 (the panel is inferred rather than entered, the analyte catalog is required,

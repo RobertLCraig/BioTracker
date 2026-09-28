@@ -60,7 +60,7 @@ carried by incoming result rows.
 | `source_via` | string | yes | PKB `source.via`, e.g. "Via Integration (HL7)" |
 | `lab_type` | string | yes | PKB `labType`, e.g. "BLS" |
 | `notes` | text | yes | **encrypted** |
-| `client_id` | string | yes | dedup key: the lowest `external_id` of its results, or a synthesised hash |
+| `client_id` | string | yes | dedup key: set to the `lab_order_id` (`LabResultImporter::resolvePanel()`) |
 
 Indexes: `(user_id, collected_at)`, unique `(user_id, client_id)`.
 
@@ -256,16 +256,20 @@ required foreign key should prevent.
 
 ### Dedup keys
 - **Lab, PKB JSON:** `lab_results.external_id` is PKB's datapoint id — globally unique and stable,
-  so re-importing the same file is a no-op. A panel's `client_id` is the lowest `external_id` of
-  its results.
-- **Lab, manual or paste:** no PKB id exists, so `external_id` is synthesised as
-  `sha1(user_id | test_key | sampled_at | value_text | lab_order_id)`.
+  so re-importing the same file is a no-op. When a datapoint has no `id`,
+  `PkbTestImportService::mapDataPoint()` synthesises one as
+  `sha1((pkb_type_id ?? name) | date.value | value.display)`. A panel's `client_id` is its
+  `lab_order_id`, and panels upsert on `(user_id, client_id)`.
+- **Lab, manual or paste:** no dedup. `POST /lab-results` writes no `external_id` and no panel, so
+  the same result posted twice is two rows. Paste (`POST /lab-results/parse`) never persists; its
+  confirmed rows go through that same `POST /lab-results`.
 - **The five log tables:** `client_id`, supplied by the client, unique per table.
   `activity_logs` has no `client_id` column — it keeps the value inside its `metadata` JSON.
 
 ### One shape, three ingest paths
-The PKB JSON importer, the manual controller and the paste parser all normalise to the same DTO and
-persist through `LabResultImporter`, so dedup, validation and audit happen in exactly one place.
+Only the PKB JSON importer persists through `LabResultImporter`. The manual controller calls
+`LabResult::create()` itself, and the paste parser only previews. So dedup and panel inference
+apply to PKB imports only. Both persisting paths set `test_key` from the resolved definition.
 The PKB JSON → column map is [spec/lab-results-design.md](spec/lab-results-design.md) §2.5.
 
 ---
