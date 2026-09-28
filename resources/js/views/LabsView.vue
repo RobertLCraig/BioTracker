@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useApi } from '@/composables/useApi';
+import { loadPanels, groupResults } from '@/labs';
 import { Line } from 'vue-chartjs';
 import {
     Chart as ChartJS,
@@ -63,48 +64,24 @@ function rangeOf(r) {
 
 const dateOf = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
-/**
- * Group the newest-first result list by panel, keeping first-seen order so the
- * groups stay newest-first too. Results with no lab_order_id carry no panel
- * (see LabResultImporter::resolvePanel), so they fall into a trailing bucket.
- */
-const groups = computed(() => {
-    const out = [];
-    const byId = new Map();
-    for (const r of results.value) {
-        const id = r.lab_panel_id ?? 'none';
-        if (!byId.has(id)) {
-            const p = panels.value[r.lab_panel_id];
-            byId.set(id, {
-                id,
-                title: p?.name || p?.performing_org || (p ? `Lab order ${p.lab_order_id}` : 'Not part of a panel'),
-                date: p?.collected_at ?? r.sampled_at,
-                rows: [],
-            });
-            out.push(byId.get(id));
-        }
-        byId.get(id).rows.push(r);
-    }
-    return out;
-});
+const groups = computed(() => groupResults(results.value, panels.value));
 
 async function load() {
     loading.value = true;
-    const [res, pan, ser] = await Promise.all([
+    const [res, ser] = await Promise.all([
         get('/lab-results'),
-        get('/lab-panels'),
         get('/lab-results/trends'),
     ]);
     results.value = res.data.data;
     total.value = res.data.meta?.total ?? res.data.data.length;
-    panels.value = Object.fromEntries(pan.data.data.map(p => [p.id, p]));
+    panels.value = await loadPanels(get, results.value.map(r => r.lab_panel_id));
     series.value = ser.data.data.series;
     loading.value = false;
 
-    if (series.value.length && !testKey.value) {
-        testKey.value = series.value[0].test_key;
-        await loadTrend();
-    }
+    if (!series.value.length) return;
+    if (!testKey.value) testKey.value = series.value[0].test_key;
+    // Always reload: after an import the selected analyte may have new points.
+    await loadTrend();
 }
 
 async function loadTrend() {

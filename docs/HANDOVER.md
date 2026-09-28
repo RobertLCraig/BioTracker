@@ -145,6 +145,8 @@ PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 ls docs/board/todo docs/board/in-progress docs/board/human-review   # the whole live picture
 git log --format='%ad %s%n%b' --date=short -5                       # the narrative
 ```
+JS helpers behind `LabsView.vue` live in `resources/js/labs.js` and are tested with Node's own
+runner, outside the PHP suite: `node --test tests/js/labs.test.mjs` (expect: 4 pass).
 Frontend: `npm run build`, or `composer run dev` to run Laravel, Vite, the queue and logs together.
 Sign in with the seeded demo account named in `README.md`.
 

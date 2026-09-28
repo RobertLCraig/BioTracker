@@ -14,7 +14,7 @@ report exporter, which already carries a lab section.
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [ ] #1 WHEN a signed-in user opens `/labs`, THE APP SHALL list their lab results newest first,
+- [x] #1 WHEN a signed-in user opens `/labs`, THE APP SHALL list their lab results newest first,
       grouped by panel, each row showing test name, value with unit, reference range and the
       out-of-range flag.
 - [x] #2 WHEN a result is flagged high or low, THE APP SHALL mark it visibly in the list rather
@@ -154,3 +154,34 @@ VERDICT: defect
 first page is grouped under a false "Not part of a panel" heading. Also still open from the same
 review: after an upload, `load()` skips `loadTrend()` when `testKey` is already set, so the chart
 shows pre-import points.
+
+**2026-09-28** RESULT: done
+TESTS: +4 new, all green
+TOUCHED: resources/js/labs.js
+resources/js/views/LabsView.vue
+tests/js/labs.test.mjs
+docs/HANDOVER.md
+docs/board/in-progress/0003-lab-results-vue-view.md
+OUT-OF-SCOPE: none
+
+Fixed both review findings. `load()` now fetches `/lab-panels` page by page (`?page=`, which
+`paginate(25)` already answers, so no API change) until every `lab_panel_id` in the loaded results
+is found or `meta.last_page` is reached. It stops early, so a long history costs one request in the
+usual case. The grouping now tells a missing panel apart from no panel: a non-null
+`lab_panel_id` whose panel did not load is headed "Lab panel", never "Not part of a panel".
+
+The page walk and the grouping moved out of the SFC into `resources/js/labs.js`, so they can be
+tested. The repo had no JS test harness. I used Node's built-in runner, not a new dependency:
+`node --test tests/js/labs.test.mjs` (the directory form does not resolve on Windows). It is not
+part of `phpunit`, so a PHP-only run will not see it. Watched red first: the page-26 test got
+`undefined` and the missing-panel test got "Not part of a panel". The early-stop test was green
+before the fix too; it guards the new loop against walking every page.
+
+Stale trend after upload: `load()` now calls `loadTrend()` every time, not only when no analyte was
+picked. This harness cannot express that case: it lives in the SFC's reactive state, and there is
+no Vue test utils here to mount it. It is fixed but not tested.
+
+Still open: the demo-account task. The demo seeder has no lab data, and a worktree cannot be
+browsed, so this view still needs one `/run` pass against a PKB import. `.\vendor\bin\pest.bat`
+does not exist; `.\vendor\bin\phpunit.bat` → 15 passed, 75 assertions. No PHP file touched, so
+Pint had nothing to check. `npm run build` clean.
