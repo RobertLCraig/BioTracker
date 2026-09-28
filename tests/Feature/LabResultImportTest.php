@@ -299,6 +299,36 @@ class LabResultImportTest extends TestCase
         $this->assertSame('serum-cholesterol', $result->test_key);
     }
 
+    /** Card 0008: a manual result carrying an order id joins that order's panel, new or existing. */
+    public function test_manual_result_with_order_id_joins_its_panel(): void
+    {
+        $user = User::factory()->create();
+        $post = fn (string $name, string $order) => $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/lab-results', [
+                'test_name' => $name,
+                'value_text' => '30',
+                'value_numeric' => 30,
+                'sampled_at' => '2026-08-01T09:00:00Z',
+                'lab_order_id' => $order,
+            ])->assertCreated()->json('lab_panel_id');
+
+        // No panel yet for ORDER9 → one is created.
+        $newPanelId = $post('Serum ferritin', 'ORDER9');
+        $this->assertNotNull($newPanelId, 'lab_order_id was dropped: the result joined no panel.');
+        $panel = LabPanel::withoutGlobalScopes()->findOrFail($newPanelId);
+        $this->assertSame('ORDER9', $panel->lab_order_id);
+        $this->assertSame($user->id, $panel->user_id);
+
+        // An imported ORDER1 panel exists → the manual result joins it, and its PKB detail survives.
+        app(PkbTestImportService::class)->import($user, $this->pkbPayload());
+        $imported = LabPanel::withoutGlobalScopes()->where('client_id', 'ORDER1')->sole();
+
+        $this->assertSame($imported->id, $post('Serum folate', 'ORDER1'));
+        $this->assertSame('pkb_json', $imported->fresh()->source);
+        $this->assertSame('BLS', $imported->fresh()->lab_type);
+        $this->assertSame(2, LabPanel::withoutGlobalScopes()->where('user_id', $user->id)->count());
+    }
+
     /** A name that matches no slug but does match an alias resolves, case and spacing aside. */
     public function test_alias_resolves_without_creating_a_second_definition(): void
     {
