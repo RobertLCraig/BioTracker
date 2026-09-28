@@ -323,6 +323,26 @@ class LabResultImportTest extends TestCase
         $this->assertSame(['serum-cholesterol'], $keys->unique()->values()->all());
     }
 
+    /**
+     * AC#5 on a database with history: "Cholesterol" logged by hand before the seed
+     * aliased it left an auto-created `cholesterol` row, which must not shadow the alias.
+     */
+    public function test_an_older_auto_created_slug_does_not_shadow_a_seeded_alias(): void
+    {
+        LabTestDefinition::create(['name' => 'Cholesterol', 'slug' => 'cholesterol', 'is_curated' => false]);
+
+        $user = User::factory()->create();
+        app(PkbTestImportService::class)->import($user, $this->pkbPayload());
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/lab-results', [
+            'test_name' => 'Cholesterol',
+            'value_text' => '5.2',
+            'value_numeric' => 5.2,
+            'unit' => 'mmol/L',
+            'sampled_at' => '2026-08-01T09:00:00Z',
+        ])->assertCreated()->assertJsonPath('test_key', 'serum-cholesterol');
+    }
+
     /** Two definitions claiming one alias would make resolution order-dependent. */
     public function test_seeded_aliases_are_unique_across_the_catalog(): void
     {

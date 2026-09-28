@@ -23,7 +23,7 @@ attribute mutators on the model, so the column holds ciphertext.
 ### Lab domain (Phase 6)
 
 #### `lab_test_definitions` — seeded analyte catalog
-Shared reference data. **Not** user-owned and has no `user_id`: seeded like `activity_types`, 53
+Shared reference data. **Not** user-owned and has no `user_id`: seeded like `activity_types`, 52
 rows. Results link to it so the same analyte trends as one series whatever the lab called it.
 
 | Column | Type | Null | Notes |
@@ -34,7 +34,7 @@ rows. Results link to it so the same analyte trends as one series whatever the l
 | `code` | string | yes | LOINC / SNOMED code once mapped |
 | `name` | string | no | canonical analyte name, e.g. "Serum creatinine" |
 | `slug` | string | no | unique — fallback match key, and the value of `lab_results.test_key` |
-| `aliases` | json | yes | naming variants ("Creatinine", "Creat") — matched on their slug when the incoming name matches no `slug`. Seeded on 50 of the 53 rows |
+| `aliases` | json | yes | naming variants ("Creatinine", "Creat") — matched on their slug when the incoming name matches no curated `slug`, and ahead of an auto-created row with that slug. Seeded on 49 of the 52 rows |
 | `category` | string | yes | e.g. "Biochemistry", "Haematology", "Lipids" |
 | `default_unit` | string | yes | expected unit, e.g. "µmol/L" |
 | `default_range_low` | decimal(12,4) | yes | typical adult reference low (fallback only) |
@@ -278,11 +278,12 @@ The PKB JSON → column map is [spec/lab-results-design.md](spec/lab-results-des
 
 - ~~**`aliases` is designed and dead.**~~ Closed by card 0005: `resolveForImport()` falls back to
   an alias lookup between the slug match and the auto-create, matching slug against slug so case,
-  spacing and punctuation do not matter, and the seeder writes aliases on 50 of the 53 rows. What
+  spacing and punctuation do not matter, and a curated alias outranks an older auto-created row
+  holding the same slug. The seeder writes aliases on 49 of the 52 rows. What
   remains is curation, not divergence — the seeded variants are the ordinary UK pathology
   spellings, not a list checked against a real capture. Card 0001 supplies that.
-- **Only 6 of the 53 seeded definitions carry a `pkb_type_id`** — the lipids captured 2026-07-17.
-  The other 47 rely on their name slugging identically to PKB's. The resolver backfills the id onto
+- **Only 6 of the 52 seeded definitions carry a `pkb_type_id`** — the lipids captured 2026-07-17.
+  The other 46 rely on their name slugging identically to PKB's. The resolver backfills the id onto
   a seeded row on first import, so this self-heals for every analyte whose name matches.
 - **The importer class is named `PkbTestImportService`**, not `PkbTestJsonImporter` as
   [spec/lab-results-design.md](spec/lab-results-design.md) §3a and §9 still call it. The code is
