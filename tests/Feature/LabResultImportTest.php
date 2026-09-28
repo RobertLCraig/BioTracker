@@ -343,6 +343,33 @@ class LabResultImportTest extends TestCase
         ])->assertCreated()->assertJsonPath('test_key', 'serum-cholesterol');
     }
 
+    /**
+     * AC#5 when the older auto-created row also holds a PKB id: the id-first match must
+     * not keep imports on that row while manual entries go to the seeded alias.
+     */
+    public function test_an_older_auto_created_row_holding_a_pkb_id_does_not_split_the_series(): void
+    {
+        LabTestDefinition::create([
+            'pkb_type_id' => '943400999', 'code_system' => 'loincMapping',
+            'name' => 'Creatinine', 'slug' => 'creatinine', 'is_curated' => false,
+        ]);
+
+        $user = User::factory()->create();
+        $manualKey = $this->actingAs($user, 'sanctum')->postJson('/api/v1/lab-results', [
+            'test_name' => 'Creatinine',
+            'value_text' => '80',
+            'value_numeric' => 80,
+            'unit' => 'umol/L',
+            'sampled_at' => '2026-08-01T09:00:00Z',
+        ])->assertCreated()->json('test_key');
+
+        $imported = LabTestDefinition::resolveForImport('943400999', 'loincMapping', 'Creatinine', 'umol/L');
+
+        $this->assertSame('serum-creatinine', $manualKey);
+        $this->assertSame($manualKey, $imported->slug);
+        $this->assertSame('943400999', $imported->fresh()->pkb_type_id);
+    }
+
     /** Two definitions claiming one alias would make resolution order-dependent. */
     public function test_seeded_aliases_are_unique_across_the_catalog(): void
     {

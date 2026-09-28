@@ -39,7 +39,7 @@ this card's second visit.
       definition lacks, THE APP SHALL backfill that id, as it already does on a slug match.
 - [x] #4 IF an analyte matches neither an id, a slug, nor an alias, THEN THE APP SHALL still
       create an uncurated definition rather than dropping the row.
-- [ ] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
+- [x] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
       definition, THE APP SHALL give them the same `test_key` so they trend as one series.
 <!-- AC:END -->
 
@@ -236,4 +236,38 @@ VERDICT: defect
 **acceptance**
 
 - **#5 reopened**, by the breakage lens: an older auto-created row that holds a `pkb_type_id` wins the id-first match, so PKB imports stay on its `test_key` while manual entries go to the seeded alias, and one analyte trends as two series.
+
+**2026-09-28** RESULT: done
+TESTS: +1 new, all green
+TOUCHED: app/Models/LabTestDefinition.php
+TOUCHED: tests/Feature/LabResultImportTest.php
+TOUCHED: docs/HANDOVER.md
+TOUCHED: docs/board/in-progress/0005-alias-matching-for-analytes.md
+OUT-OF-SCOPE: none
+
+Closed the breakage finding behind the reopened #5. New test
+`test_an_older_auto_created_row_holding_a_pkb_id_does_not_split_the_series` creates an uncurated
+`creatinine` row holding PKB id `943400999`, posts a manual "Creatinine", then resolves an import
+with that id. Watched it fail first: the manual entry went to `serum-creatinine`, the import to
+`creatinine`.
+
+The fix in `resolveForImport()`: an id hit on a curated row returns as before. An id hit on an
+uncurated row now checks whether the name reaches a curated definition (curated slug, then alias,
+via a new `matchCurated()`). If it does and that definition has no `pkb_type_id` yet, the id moves
+to it (cleared from the old row first, because `pkb_type_id` is unique) and the curated row is
+returned. If the curated row already holds a different id, the old id match stands: two ids for one
+name is not something to guess past. The id is still matched first, so the documented order is
+unchanged.
+
+Assumed: moving the id off the auto-created row is safe, because that row existed only because the
+name was not matched when the id first arrived. Its stored results keep their old `test_key` and
+`test_definition_id`, same as the slug case: the merge pass is the Plan's second visit.
+
+HANDOVER: fixed the false "What's next" claim the scope review named (no `card/0006` branch exists;
+0006 is in `todo/`), the blockers list (0003 is in `done/`, 0005 in `in-progress/`), and the suite
+count. Not done: cutting the seeded aliases back. The scope review asks for it, but no criterion
+depends on it and which aliases are "obvious" is Rob's call, now with more weight since a curated
+alias can take a PKB id from an older row. Not browser-checked: Herd serves `C:\Dev\BioTracker`.
+Suite: 17 passed, 81 assertions. Pint passes on the model; the test file fails only `concat_space`,
+at HEAD already.
 
