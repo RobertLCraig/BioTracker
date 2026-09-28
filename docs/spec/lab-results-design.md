@@ -1,6 +1,6 @@
 # Lab / Test Results — Feature Design
 
-Status: **design-spec** (no code yet)
+Status: **built** (Phase 6, on `master`); this is the pre-code design record
 Author: design session 2026-07-17
 Scope: adds a new "Lab / Test Results" domain to BioTracker. Built as "Phase 6" — see
 [`../build/PROJECT_STATUS.md`](../build/PROJECT_STATUS.md). Its schema now lives in
