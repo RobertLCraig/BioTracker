@@ -39,7 +39,7 @@ this card's second visit.
       definition lacks, THE APP SHALL backfill that id, as it already does on a slug match.
 - [x] #4 IF an analyte matches neither an id, a slug, nor an alias, THEN THE APP SHALL still
       create an uncurated definition rather than dropping the row.
-- [x] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
+- [ ] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
       definition, THE APP SHALL give them the same `test_key` so they trend as one series.
 <!-- AC:END -->
 
@@ -177,3 +177,63 @@ scope finding (about 120 guessed aliases all written `is_curated => true`) is st
 entry does not change the seeded aliases. Not browser-checked: Herd serves `C:\Dev\BioTracker`.
 Suite: 16 passed, 77 assertions. Pint passes on the model; the test file fails `concat_space` at
 HEAD already, as the first entry says.
+
+### 2026-09-28 review (v20260928195443-93e1)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 26s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I checked each rule against the code. All five hold.
+
+- **#1 alias match:** `LabTestDefinition::resolveForImport()` calls `LabTestDefinition::matchAlias()` before it makes a new row. The test `test_alias_resolves_without_creating_a_second_definition` checks this.
+- **#2 case and spaces:** both sides go through `Str::slug`, in `resolveForImport()` and in `matchAlias()`. The same test sends `'  haemoglobin   ESTIMATION  '`.
+- **#3 backfill:** one `pkb_type_id` backfill step in `resolveForImport()` runs after either match. The test `test_alias_match_backfills_the_pkb_type_id` checks this.
+- **#4 no match:** the last `create(['is_curated' => false])` in `resolveForImport()` still runs. The test `test_unmatched_analyte_still_creates_an_uncurated_definition` checks this.
+- **#5 same series:** `LabResultController::store()` and `PkbTestImportService` both set `test_key` from the matched row's slug. The old problem is fixed: a curated alias now wins over an older auto-made row with the same slug. The test `test_an_older_auto_created_slug_does_not_shadow_a_seeded_alias` checks this.
+
+The suite is green. I could not break any of the five rules.
+
+VERDICT: sound
+
+**scope: defect**
+
+I found two scope problems. Neither one disproves an acceptance criterion.
+
+1. **`docs/HANDOVER.md`, section "What's next (in order)", is still false.** It says card 0006 "is built on branch `card/0006`... waiting on the scheduler's merge". `git branch -a` shows only `master`. The last review flagged this same claim about `card/0005`. The builder fixed that name and wrote the same wrong claim for 0006. The card's Tasks ask for no work on HANDOVER. It is the first file every session reads, so this false line misleads the next session.
+
+2. **The guessed aliases now have more power, and the card's fence is being tested.** `LabTestDefinition::resolveForImport()` now puts a curated alias ahead of an existing auto-created slug. `LabTestDefinitionSeeder::run()` writes about 120 guessed aliases, and every row gets `is_curated => true`. The Plan asked only for "the obvious variants". Seeding entries like "GFR calculated abbreviated MDRD" is the curation that "Not this card" gives to card 0001. A wrong guess now wins over data the user already has, so this scope growth can do more harm than before.
+
+The comment says the new ranking stays inside step 2 (slug or aliases), so the match order is not changed. I accept that. The migration of old data is left half done, but the Plan gives it to this card's second visit, so it is not a defect.
+
+The fix for the next build: correct the HANDOVER branch claim, and cut the aliases back to the obvious variants.
+
+No criterion is disproved, so there are no UNMET lines.
+
+VERDICT: defect
+
+**breakage: defect**
+
+I found one break. The fix covers only half of the old-data case.
+
+**Finding: an old auto-created row still takes PKB imports, so the series still splits.**
+
+- In `LabTestDefinition::resolveForImport()`, the `pkb_type_id` match runs first. It returns any row with that id, curated or not.
+- The final `create()` in `resolveForImport()` writes the incoming `pkb_type_id` onto each auto-created row.
+- Example. Before this card, a PKB import brought "Creatinine" with an id, say X. That made an uncurated row `creatinine` with `pkb_type_id` X.
+- Now a manual "Creatinine" matches the alias and resolves to `serum-creatinine`.
+- But every later PKB import with id X still resolves to the old `creatinine` row, because the id match wins.
+- The seeded row can never get id X. The "curated alias outranks" rule in `resolveForImport()` only applies to the slug step.
+- So manual entries and PKB imports of the same analyte get two different `test_key` values. That is the split #5 forbids. It hits 46 of the 52 analytes, the ones seeded with no `pkb_type_id`.
+- `test_an_older_auto_created_slug_does_not_shadow_a_seeded_alias` does not catch this. Its old `cholesterol` row has no `pkb_type_id`, and its import uses the seeded lipid ids.
+
+UNMET: #5 an older auto-created row that holds a `pkb_type_id` wins the id-first match, so PKB imports stay on its `test_key` while manual entries go to the seeded alias, and one analyte trends as two series.
+
+VERDICT: defect
+
+**acceptance**
+
+- **#5 reopened**, by the breakage lens: an older auto-created row that holds a `pkb_type_id` wins the id-first match, so PKB imports stay on its `test_key` while manual entries go to the seeded alias, and one analyte trends as two series.
+
