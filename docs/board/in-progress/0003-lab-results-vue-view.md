@@ -14,7 +14,7 @@ report exporter, which already carries a lab section.
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [ ] #1 WHEN a signed-in user opens `/labs`, THE APP SHALL list their lab results newest first,
+- [x] #1 WHEN a signed-in user opens `/labs`, THE APP SHALL list their lab results newest first,
       grouped by panel, each row showing test name, value with unit, reference range and the
       out-of-range flag.
 - [x] #2 WHEN a result is flagged high or low, THE APP SHALL mark it visibly in the list rather
@@ -243,4 +243,36 @@ VERDICT: sound
 **acceptance**
 
 - **#1 reopened**, by the scope lens: `load()` in `LabsView.vue` shows only the first 50-row page of `/lab-results`, and the API already pages, so the "no API change" reason for stopping there does not hold.
+
+**2026-09-28** RESULT: done
+TESTS: +2 new, all green
+TOUCHED: resources/js/labs.js
+resources/js/views/LabsView.vue
+tests/js/labs.test.mjs
+docs/HANDOVER.md
+docs/board/in-progress/0003-lab-results-vue-view.md
+docs/board/todo/0007-lab-results-index-stable-page-order.md
+OUT-OF-SCOPE: 0007
+
+The reviewer was right: `paginate(50)` already answers `?page=`. New `loadResults(get)` in
+`labs.js` walks every page of `/lab-results` until `meta.last_page`, the same way `loadPanels`
+walks `/lab-panels`. `load()` uses it. The "Showing the newest N of M" line and its `total` ref are
+gone, because the list is now whole. No API change.
+
+Test-first: I moved the old one-page fetch into `loadResults` unchanged, then wrote
+`every_result_is_listed_not_only_the_first_50_row_page`. It went red with `actual: 50, expected:
+120`. Then the fix made it green.
+
+The index sorts by `sampled_at` alone, and a panel's rows share one `sampled_at`, so tied rows can
+repeat or go missing across a page edge. The view drops a repeated id
+(`a_row_repeated_across_a_page_edge_is_listed_once`, watched red with the guard taken out). It
+cannot recover a skipped row: only a tie-break in the API fixes that, which this card excludes. That
+is card 0007.
+
+Also corrected the `groupResults` docblock the last review flagged ("trailing bucket" was wrong).
+
+Suite: `.\vendor\bin\pest.bat` does not exist; `.\vendor\bin\phpunit.bat` → 15 tests, 75
+assertions, OK. `node --test tests/js/labs.test.mjs` → 6 pass. `npm run build` clean. No PHP file
+touched, so Pint had nothing to check. The demo-account task stays open: still no browser from a
+worktree, and the demo seeder still has no lab data.
 

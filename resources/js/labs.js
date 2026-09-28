@@ -2,6 +2,20 @@
 // can run them without a Vue test harness.
 
 /**
+ * /lab-results pages at 50 (newest first), so walk every page for the full list.
+ * The index orders by sampled_at alone, and a panel's rows share one sampled_at,
+ * so a tie can straddle a page edge: drop any id already seen.
+ */
+export async function loadResults(get) {
+    const rows = new Map();
+    for (let page = 1; ; page++) {
+        const res = await get('/lab-results', { page });
+        for (const r of res.data.data) if (!rows.has(r.id)) rows.set(r.id, r);
+        if (page >= (res.data.meta?.last_page ?? 1)) return [...rows.values()];
+    }
+}
+
+/**
  * /lab-panels pages at 25 while /lab-results pages at 50, so one page can miss
  * panels the loaded results belong to. Walk the pages (newest first, like the
  * results) until every id in `ids` is found or the pages run out.
@@ -19,7 +33,8 @@ export async function loadPanels(get, ids) {
 /**
  * Group the newest-first result list by panel, keeping first-seen order so the
  * groups stay newest-first too. Results with no lab_order_id carry no panel
- * (see LabResultImporter::resolvePanel), so they fall into a trailing bucket.
+ * (see LabResultImporter::resolvePanel), so they share one "Not part of a panel"
+ * group, placed where its newest row falls.
  */
 export function groupResults(results, panels) {
     const out = [];
