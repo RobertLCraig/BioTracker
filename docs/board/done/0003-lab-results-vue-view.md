@@ -276,3 +276,59 @@ assertions, OK. `node --test tests/js/labs.test.mjs` → 6 pass. `npm run build`
 touched, so Pint had nothing to check. The demo-account task stays open: still no browser from a
 worktree, and the demo seeder still has no lab data.
 
+### 2026-09-28 review (v20260928191730-3a88)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 23s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I checked all six acceptance criteria against the code. I could not break any of them.
+
+- **#1:** `loadResults` in `resources/js/labs.js` walks every page of `/lab-results`, so the list is now complete. The rows come newest first. `groupResults` in `labs.js` groups them by panel. `loadPanels` fills in the panel names. In `LabsView.vue`, `valueOf`, `rangeOf` and `flagOf` fill the test, value with unit, range and flag columns.
+- **#2:** In `LabsView.vue`, the `FLAGS` map and `flagOf` put a badge and a coloured left border on each high or low row.
+- **#3:** `loadTrend` calls `/lab-results/trends?test_key=`. In `chartData`, the "Range high" dataset uses `fill: '+1'` to shade down to "Range low". `Filler` is registered.
+- **#4:** `upload` posts `file` through `postForm` to `/lab-results/import`. It reports `panels` and `results_created`.
+- **#5:** `valueOf` falls back to `value.text`, so text-only rows stay in the list. `chartPoints` removes the points that have a null value.
+- **#6:** The `v-else-if="!results.length"` block shows "No lab results yet" and an Import button. It does not show a chart.
+
+The last review's scope finding is fixed: the view no longer stops at the first 50 rows. Rows with the same timestamp can still go missing at a page edge. That needs an API change, and card 0007 already tracks it. So it does not disprove #1. The demo-account check is still not done, but it is an unticked task, not a criterion.
+
+VERDICT: sound
+
+**scope: sound**
+
+I checked what this card changed. Nothing crosses the "Not this card" fence, and I found nothing left half done.
+
+**Did it stay inside the fence?** Yes. `loadResults` and `loadPanels` in `resources/js/labs.js` ask the API for more pages with `?page=`. The API already takes that, so no endpoint changed. The PHP, doc and seeder changes in the diff come from cards 0004 and 0005, not this card.
+
+**Is the last finding fixed?** Yes. `loadResults` in `resources/js/labs.js` now gets every page of `/lab-results` until `meta.last_page`. `load()` in `LabsView.vue` uses it, so #1 now lists all results, not only the newest 50. `load()` also calls `loadTrend()` every time now.
+
+**The one leftover is out of scope.** Rows with the same `sampled_at` can be skipped at a page edge. Only an API change can fix that, and this card forbids API changes. The builder opened card 0007 for it and said so on the card.
+
+**The browser check is still not done.** It is an unticked task, not a criterion. The card says so openly.
+
+No criterion is disproved.
+
+VERDICT: sound
+
+**breakage: sound**
+
+**Breakage lens: I tried to break it and could not.**
+
+What I checked:
+
+- **The page walks.** `loadResults` and `loadPanels` in `resources/js/labs.js` send `{ page }` through `get(path, params)` in `useApi.js`. The params go through as axios query params. `LabResultController::index` uses `paginate(50)` and `LabPanelController::index` uses `paginate(25)`, so both answer `?page=`. Both loops end at `meta.last_page`. An empty list returns `last_page` 1, so neither loop can run forever.
+- **Repeated ids.** `loadResults` keeps each id once, so a tied row that shows up on two pages is listed once.
+- **Callers.** `LabsView.vue` is the only file that uses the three helpers. It uses the new ones. The old `total` ref and the "Showing the newest N of M" line are gone, and nothing else still points at them.
+- **Headings.** In `groupResults`, only a result with a null `lab_panel_id` gets "Not part of a panel". A panel id that did not load gets "Lab panel".
+- **Docblocks.** `LabResultImporter::resolvePanel` exists, as the comment says. The "trailing bucket" wording is now fixed.
+- **Stale chart.** `load()` always calls `loadTrend()`, and `upload()` calls `load()`.
+
+Not a defect: a row that is skipped at a page edge because of the `sampled_at` tie cannot be recovered in the view. The card says so, and card 0007 covers the API fix.
+
+This finding disproves no criterion.
+
+VERDICT: sound
+
