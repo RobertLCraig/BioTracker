@@ -331,3 +331,5 @@ Old results keep their old `test_key` until the merge pass. The card defers that
 
 VERDICT: sound
 
+
+**2026-09-28** The reviewer's acceptance lens returned this card sound: I checked the model: `app/Models/LabTestDefinition.php`. Each criterion traces to real code. The reviewer's scope lens returned this card defect: I found three scope problems. None of them breaks an acceptance criterion. The reviewer's breakage lens returned this card sound: I tried to break the latest change and I could not. No acceptance criterion is disproved. The loop moved it from todo/ to human-review/ because it has bounced 3 times between todo and ai-review, all 5 criteria ticked. THE BUILDER COULD NOT ACT ON THAT FINDING. A reviewer reopens every criterion it reports unmet, and the reviews that sent this card back named no criterion they disproved, so it came back with 5 of 5 criteria still ticked, every session found nothing open to do, and the loop promoted it again on the boxes. Add or reopen the criterion the finding breaks and move it back to todo/, or say here why the finding is wrong.
