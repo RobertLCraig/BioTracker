@@ -1,5 +1,24 @@
 # Alias matching for analyte definitions (close the §2 divergence)
 
+## What I need from you
+
+**Keep the ~120 alternative test names the build seeded, or cut them to the plain ones until your full PKB capture (card 0001) shows the real names?**
+
+The feature is built and its five criteria hold. The only open point is how many alternative names ("aliases") each blood test gets. An alias decides which of your results are drawn as one trend line. A wrong one would merge two different tests into one line of your history.
+
+1. **Keep as built.** All 49 tests keep their seeded names. Some are names GP record systems print, such as "GFR calculated abbreviated MDRD" and "Serum alanine aminotransferase level". Matching is exact once case and spacing are ignored, so "Serum iron" cannot capture "Serum iron binding capacity". A test also refuses any name claimed by two tests. The card goes on to review as it stands.
+2. **Cut back.** Keep only the plain pairs ("Creatinine" for "Serum creatinine", and the spelled-out form of an abbreviation such as "Haemoglobin" for "Hb"). Drop the longer report-style names until card 0001's capture proves them. The card goes back to be rebuilt with that narrower list.
+
+**My recommendation: 1.** A name has to match exactly to merge anything, and the 0001 capture will show every miss as a new, separate test rather than a wrong merge. Pick 2 if you would rather nothing about your lab history rests on a guess.
+
+**Pass:** one line in `## Comments`, either of these:
+- `**2026-09-29** **Decided:** 1, keep the seeded aliases.` Then move the card to `ai-review/`.
+- `**2026-09-29** **Decided:** 2, cut the aliases to the plain pairs until 0001's capture.` Then move the card to `todo/` and add an unticked criterion saying which names stay.
+
+**Fail:** no answer. The loop has already sent this card round three times on this one point.
+
+**Why it needs you.** It is a risk to your own health record, whichever way it goes, and the builder and three reviews all left it for you.
+
 ## Why
 The canonical shape says the analyte match order is (1) `pkb_type_id`, then (2) a fallback to
 `slug` **or `aliases`** (design doc §2, `lab_test_definitions`). The code does not do the second
