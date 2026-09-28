@@ -45,7 +45,7 @@ everything the card knows and changes only how it is ordered and said. `## Direc
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [ ] #1 WHEN a card in a non-terminal lane is rewritten, THE CARD SHALL state the problem in
+- [x] #1 WHEN a card in a non-terminal lane is rewritten, THE CARD SHALL state the problem in
       `## Why` before any solution appears anywhere in it. proves: none - about prose, and no check
       here reads prose
 - [x] #2 WHEN a rewritten card is a decision, THE CARD SHALL say which of the four reasons makes it
@@ -217,3 +217,37 @@ recommendation ("merge now") above `## Why`, and the README scopes ask-first to 
 only, so nothing forces that order on a `todo/` card. Also still open from the breakage review:
 bare `0001` mentions remain in 0002's `## Options` and 0001's `## Tasks`, which the `card NNNN`
 respelling missed.
+
+**2026-09-28**
+RESULT: done
+TESTS: +0 new, all green (17 tests, 81 assertions, `vendor\bin\phpunit.bat`)
+TOUCHED: docs/board/todo/0002-merge-lab-results-branch.md
+docs/board/human-review/0001-verify-full-pkb-capture.md
+docs/board/in-progress/0006-rewrite-this-board-s-cards-for-the-reader.md
+OUT-OF-SCOPE: none
+
+Closed the two findings the 2026-09-28 manager pass reopened. No test: every criterion here is
+`proves: none`, and no PHP changed.
+
+- **#1 on `todo/0002`.** Moved `## What I need from you` below `## Why` and `## Links`, so the
+  card now reads problem, links, ask, options, recommendation, decided. The reviewer was right that
+  ask-first is scoped to `human-review/` and nothing forces it on a `todo/` card. The text moved;
+  it did not change, apart from the respellings below. `## Decided` is untouched.
+- **Bare numbers.** Respelled the body mentions the first pass missed: `0001` in 0002's ask and
+  twice in its `## Options`, and `0005` in 0001's `## Tasks`, each now `card NNNN`. A grep of
+  every open card body (threads excluded) finds no other bare number.
+- `todo/0007` and `todo/0008` are newer than the first pass. Both put `## Why` first with no fix
+  in it and already carry `## Links`, so neither needed an edit.
+
+`board:convention --path=<this worktree>` printed `BioTracker 0 7 0009` before the first edit and
+after the last. As the review noted, that check cannot see a bare number, so the grep above is the
+evidence for those, not the count.
+
+Left as they are:
+- 0002's title is a question that names both choices ("merge now, or hold"). It asks rather than
+  answers, so I did not reword it.
+- `human-review/0001` and `human-review/0004` still put their ask above `## Why`, because the
+  README requires that in `human-review/`. 0004 was not rewritten by this card.
+- The stale facts in 0002's `## Why` stay, as the first entry explains.
+- `vendor\bin\pest.bat` does not exist here, so the suite ran through PHPUnit. Pint was not run
+  because no PHP file changed.

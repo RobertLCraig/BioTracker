@@ -74,6 +74,6 @@ imported and the mismatches are written down.
 - [ ] Record the counts: panels, results, definitions matched by `pkb_type_id`, matched by slug,
       auto-created uncurated.
 - [ ] List every uncurated definition created, and say whether a seeded row already meant the same
-      analyte. That list is the input to 0005.
+      analyte. That list is the input to card 0005.
 - [ ] Spot-check five flags against the portal.
 - [ ] Write the findings into this card before moving it on.
