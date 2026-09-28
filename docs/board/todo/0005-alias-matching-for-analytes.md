@@ -39,7 +39,7 @@ this card's second visit.
       definition lacks, THE APP SHALL backfill that id, as it already does on a slug match.
 - [x] #4 IF an analyte matches neither an id, a slug, nor an alias, THEN THE APP SHALL still
       create an uncurated definition rather than dropping the row.
-- [x] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
+- [ ] #5 WHEN a manual entry and a PKB import name the same analyte differently but resolve to one
       definition, THE APP SHALL give them the same `test_key` so they trend as one series.
 <!-- AC:END -->
 
