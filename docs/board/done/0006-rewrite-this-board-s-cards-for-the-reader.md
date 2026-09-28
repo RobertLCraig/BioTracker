@@ -251,3 +251,57 @@ Left as they are:
 - The stale facts in 0002's `## Why` stay, as the first entry explains.
 - `vendor\bin\pest.bat` does not exist here, so the suite ran through PHPUnit. Pint was not run
   because no PHP file changed.
+
+### 2026-09-28 review (v20260928202625-cef5)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 21s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I checked all six criteria against the board files as they are now. I found no defect.
+
+- **#1 met.** In `todo/0002-merge-lab-results-branch.md`, `## Why` is now the first section. It states the problem and gives no fix. The ask and the recommendation come after it, below `## Links`.
+- **#2 met.** 0002's "Why it needs you" names a preference. Preference is one of the four reasons.
+- **#3 met.** 0001, 0005 and 0002 each have a `## Links` section. The bare numbers in 0002's `## Options` and in 0001's `## Tasks` now read `card 0001` and `card 0005`. One bare `0001` is still in 0002's `## Decided`. That section is append-only, so leaving it is correct.
+- **#4 met.** No card has `needs:` frontmatter or a `Blocked by` line, so there is nothing to disagree.
+- **#5 met.** The rework moved and respelled text only. `## Decided` has not changed.
+- **#6 met.** `board:convention` reports 0 open cards failing the checks. That number comes from the builder's report and the earlier review. I did not run the command myself.
+
+This rework fixed both findings from the last review.
+
+VERDICT: sound
+
+**scope: sound**
+
+**Scope review of card 0006: sound**
+
+**What I checked:** The two commits that did this card's work: `25d62d6` (first pass) and `006af27` (the fix). Most of the diff you were shown is not from this card. The alias code, the seeder, `LabsView.vue`, `PRD.md` and `DATA-MODEL.md` came from the commits for cards 0003, 0004 and 0005 (for example `8f413a8`). I do not count them against 0006.
+
+**Over the fence: I found nothing.**
+- **The convention was not changed.** `006af27` changes only three files: `todo/0002`, `human-review/0001` and the card itself. `docs/board/README.md` is not one of them.
+- **Nothing was deleted.** In `todo/0002-merge-lab-results-branch.md`, the `## Why` and `## Links` blocks moved above the ask with the same words. The only other change adds the word "card" in front of `0001`. In `human-review/0001-verify-full-pkb-capture.md`, the one changed line is the same kind of respelling.
+- **`## Decided` on 0002 was not edited.**
+- **No card changed lane in the build commits.** No other board was written to.
+- **The card says "changes only how it is ordered and said."** A section move is ordering, so it is inside the card's scope.
+
+**Half done: nothing.** The builder named three things it left alone: the stale facts in 0002, the ask-first order on `human-review/` cards, and 0002's title. It gave a reason for each. Cards 0007 and 0008 were checked, and neither needed an edit.
+
+VERDICT: sound
+
+**breakage: sound**
+
+I tried to break it and could not.
+
+**What I checked**
+
+- **Bare card numbers.** I searched every open card on the board. Each card number in a card body now reads `card NNNN` or is a `## Links` entry. This includes the mentions the last review named: `## Options` and the ask in `todo/0002-merge-lab-results-branch.md`, and `## Tasks` in `human-review/0001-verify-full-pkb-capture.md`. The only bare numbers left are in comment threads and in 0002's `## Decided`. The check skips threads by design, and `## Decided` must not be edited.
+- **Criterion #1 on `todo/0002`.** `## Why` is now at the top. `## Links` comes next, then the ask with the recommendation, then `## Options`. No solution comes before the problem.
+- **Cards the rewrite did not touch.** `human-review/0005-alias-matching-for-analytes.md` has `## Why` first and has `## Links`. Its bare `0001` is in `## Comments`, so the check does not read it.
+- **Out of scope.** The facts in 0002's `## Why` are out of date. The builder named this and left it alone, as this card's "Not this card" section requires.
+
+I found nothing that proves an acceptance criterion is unmet.
+
+VERDICT: sound
+
