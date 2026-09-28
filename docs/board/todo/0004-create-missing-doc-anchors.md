@@ -17,7 +17,7 @@ agreed. Where a source is missing, mark the gap loudly rather than filling it.
 <!-- AC:BEGIN -->
 - [x] #1 WHEN a fresh session opens the repo, THE REPO SHALL auto-load a root `CLAUDE.md` whose
       first instruction is to read `docs/HANDOVER.md` before changing anything.
-- [x] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
+- [ ] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
       carrying the three lab tables from the design doc §2 plus the pre-existing log tables, with
       one home per field rather than a copy in each doc.
 - [x] #3 WHEN an agent asks why something was built a given way, THE REPO SHALL provide
