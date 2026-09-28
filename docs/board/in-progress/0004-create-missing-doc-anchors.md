@@ -17,17 +17,17 @@ agreed. Where a source is missing, mark the gap loudly rather than filling it.
 <!-- AC:BEGIN -->
 - [x] #1 WHEN a fresh session opens the repo, THE REPO SHALL auto-load a root `CLAUDE.md` whose
       first instruction is to read `docs/HANDOVER.md` before changing anything.
-- [ ] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
+- [x] #2 WHEN an agent needs the canonical data shape, THE REPO SHALL provide `docs/DATA-MODEL.md`
       carrying the three lab tables from the design doc §2 plus the pre-existing log tables, with
       one home per field rather than a copy in each doc.
-- [ ] #3 WHEN an agent asks why something was built a given way, THE REPO SHALL provide
+- [x] #3 WHEN an agent asks why something was built a given way, THE REPO SHALL provide
       `docs/DECISIONS.md` holding at least D1 to D4 from the design doc §8 and the architecture
       choices table from `docs/build/PROJECT_STATUS.md`, each with its reason.
-- [ ] #4 WHEN an agent needs the goal and success criteria, THE REPO SHALL provide `docs/PRD.md`,
+- [x] #4 WHEN an agent needs the goal and success criteria, THE REPO SHALL provide `docs/PRD.md`,
       and `docs/HANDOVER.md` SHALL link it in one line rather than restating it.
 - [x] #5 WHEN the doc set is complete, THE REPO SHALL have every relative markdown link resolve to
       a file that exists.
-- [ ] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
+- [x] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
       endpoints from the design doc §6 alongside the other domains, which it currently omits.
 <!-- AC:END -->
 
@@ -265,3 +265,26 @@ VERDICT: defect
 - **#3 reopened**, by the breakage lens: D4 in DECISIONS.md says confirmed paste rows persist through `/import`, but `LabImportController::pkb()` only takes a PKB file.
 - **#6 reopened**, by the breakage lens: README.md says `/lab-results/import` takes a "confirmed paste", but no paste input exists on that endpoint.
 
+
+**2026-09-28**
+RESULT: done
+TESTS: +0 new, all green (15 tests, 75 assertions, `.\vendor\bin\phpunit.bat`)
+TOUCHED: README.md, docs/DATA-MODEL.md, docs/DECISIONS.md, docs/PRD.md, docs/spec/lab-results-design.md, docs/board/in-progress/0004-create-missing-doc-anchors.md
+OUT-OF-SCOPE: none
+
+Closed the four findings from the 2026-09-28 review, each checked against the code:
+- #2: design doc §4 held a second, wrong copy of the dedup keys. Its body is now one link to
+  `DATA-MODEL.md#dedup-keys` and a line saying the old rules were never built.
+- #3: D4 said confirmed paste rows persist through `/import`. They go to `POST /lab-results`,
+  which is what `LabResultController::parse()` tells the client.
+- #4: the PRD's `feat/lab-results` open question is closed as answered on 2026-08-16.
+- #6: README's `/lab-results/import` row now says what `LabImportController::pkb()` takes: a PKB
+  `file` or inline `payload`, queued only over 2 MB.
+
+The design doc's §3 diagram, §3c, §6 import row and §9 step 7 make the same "/import takes paste"
+claim. I did not rewrite them (the card says link only); they are listed as a known divergence in
+`DATA-MODEL.md`, which the doc treats as a bug to close.
+
+No test: no criterion here carries a `proves:` and every change is markdown, so Pint had nothing to
+check. `.\vendor\bin\pest.bat` does not exist here; the suite ran under PHPUnit. Still left for Rob:
+whether moving the §2 field tables out of the design doc was over the fence.

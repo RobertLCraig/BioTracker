@@ -287,3 +287,9 @@ The PKB JSON → column map is [spec/lab-results-design.md](spec/lab-results-des
 - **The importer class is named `PkbTestImportService`**, not `PkbTestJsonImporter` as
   [spec/lab-results-design.md](spec/lab-results-design.md) §3a and §9 still call it. The code is
   right; the design doc's name is stale.
+- **The design doc still routes paste and manual entry through the importer and `/import`.**
+  [spec/lab-results-design.md](spec/lab-results-design.md) §3's diagram, §3c ("User confirms →
+  `/import`") and the §6 row for `/lab-results/import` ("file upload **or** confirmed paste")
+  and §9 step 7 predate the build. `LabImportController::pkb()` takes a PKB `file` or `payload` only; confirmed
+  paste rows go to `POST /lab-results`, as [One shape, three ingest paths](#one-shape-three-ingest-paths)
+  says.

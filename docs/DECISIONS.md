@@ -50,7 +50,7 @@ is its §11.
 
 ## 2026-07-17 — D4: paste is best-effort, preview then confirm
 **Decision:** `POST /lab-results/parse` returns what the parser understood and writes nothing. The
-user confirms, and only then does `/import` persist.
+user confirms, and only then are the rows written, through the manual `POST /lab-results`.
 **Why:** PKB serves results through JavaScript rather than in page HTML, so a pasted table is
 heuristic text with no LOINC id, no per-datapoint id, and less reliable comparators and ranges. A
 parser that guesses silently would write wrong health data; one that shows its work first cannot.
