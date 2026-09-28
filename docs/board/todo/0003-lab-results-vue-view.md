@@ -14,7 +14,7 @@ report exporter, which already carries a lab section.
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [x] #1 WHEN a signed-in user opens `/labs`, THE APP SHALL list their lab results newest first,
+- [ ] #1 WHEN a signed-in user opens `/labs`, THE APP SHALL list their lab results newest first,
       grouped by panel, each row showing test name, value with unit, reference range and the
       out-of-range flag.
 - [x] #2 WHEN a result is flagged high or low, THE APP SHALL mark it visibly in the list rather
@@ -185,3 +185,62 @@ Still open: the demo-account task. The demo seeder has no lab data, and a worktr
 browsed, so this view still needs one `/run` pass against a PKB import. `.\vendor\bin\pest.bat`
 does not exist; `.\vendor\bin\phpunit.bat` → 15 passed, 75 assertions. No PHP file touched, so
 Pint had nothing to check. `npm run build` clean.
+
+### 2026-09-28 review (v20260928190453-5b3b)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 27s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I checked each criterion against the code. I could not break any of them.
+
+- **#1:** `groupResults` in `resources/js/labs.js` groups the rows. The rows come from `/lab-results`, which is sorted newest first. `valueOf`, `rangeOf` and `flagOf` in `LabsView.vue` fill the columns. The old "Not part of a panel" bug is fixed. `loadPanels` now fetches `/lab-panels` page by page until it finds every panel. A panel that still does not load is headed "Lab panel". It is never called "Not part of a panel".
+- **#2:** The `FLAGS` map and `flagOf` give each high or low row a badge and a coloured left border.
+- **#3:** `loadTrend` calls `/lab-results/trends` with `test_key`. `chartData` draws the band as two range datasets, with `fill: '+1'`. The `Filler` plugin (it shades the area between two lines) is registered.
+- **#4:** `upload` posts `file` through `postForm`. It reports `panels`, `results_created` and `results_updated`.
+- **#5:** `valueOf` falls back to `value.text`. `chartPoints` drops points that have a null value.
+- **#6:** The `v-else-if="!results.length"` block shows the empty state with an Import button.
+
+The old stale-chart bug is also fixed. `load()` now always calls `loadTrend()`, and `upload` calls `load()` after an import.
+
+No criterion is disproved. The demo-account check is still not done, but that is an unticked task, not a criterion.
+
+VERDICT: sound
+
+**scope: defect**
+
+Both findings from the last review are now fixed in the code. `loadPanels` in `resources/js/labs.js` pages through `/lab-panels` until it finds every panel. `groupResults` now heads a panel it could not load "Lab panel", not "Not part of a panel". `load()` in `LabsView.vue` now always calls `loadTrend()`.
+
+**The fence held.** The diff also shows `LabTestDefinition::matchAlias`, the seeder aliases, `PRD.md`, `DATA-MODEL.md` and `DECISIONS.md`. Those come from cards 0004 and 0005, which were merged into the same range. This card's TOUCHED list does not include them. I do not count them against this card.
+
+**One item is still half done.** `load()` in `LabsView.vue` still fetches one page of `/lab-results`, which is 50 rows. The view then prints "Showing the newest N of M". The card says the view does not page because paging "would be an API change". That reason is wrong. `LabResultController::index` uses `paginate(50)`, so it already accepts `?page=`. The builder proved this when it wrote `loadPanels`, which walks pages on `/lab-panels` with no API change. The same loop on `/lab-results` needs no API change either. After a full PKB import (card 0001), AC #1 will list only the newest 50 results, not "their lab results".
+
+The demo-account task is still unticked, and the card says so.
+
+UNMET: #1 `load()` in `LabsView.vue` shows only the first 50-row page of `/lab-results`, and the API already pages, so the "no API change" reason for stopping there does not hold.
+
+VERDICT: defect
+
+**breakage: sound**
+
+I tried to break the fix. I could not.
+
+**What I checked:**
+
+- **Panel page walk.** `loadPanels` in `resources/js/labs.js` asks for `/lab-panels` page by page, using `get(path, params)` in `useApi.js`. It stops when it has found every panel it needs, or when it reaches `meta.last_page`. So a panel on page 2 or later now loads. The page order does not matter.
+- **Wrong heading.** `groupResults` in `labs.js` now shows "Lab panel" for a panel ID that did not load. Only a result with a null `lab_panel_id` gets "Not part of a panel".
+- **Stale chart.** `load()` in `LabsView.vue` now runs `loadTrend()` every time, also when an analyte is already picked. So after an upload, the chart gets the new points.
+- **No callers left behind.** `LabsView.vue` is the only user of the two helpers.
+
+**One small note, not a defect:** the docblock on `groupResults` says results with no panel go into a "trailing" bucket. That is not true. The code keeps first-seen order, so that group can show up anywhere in the list. Only the words are wrong. Nothing on screen breaks.
+
+This finding does not disprove any criterion.
+
+VERDICT: sound
+
+**acceptance**
+
+- **#1 reopened**, by the scope lens: `load()` in `LabsView.vue` shows only the first 50-row page of `/lab-results`, and the API already pages, so the "no API change" reason for stopping there does not hold.
+
