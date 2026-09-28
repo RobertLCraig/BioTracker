@@ -1,5 +1,30 @@
 # Create the missing doc anchors (PRD, DATA-MODEL, DECISIONS, CLAUDE.md)
 
+## What I need from you
+
+**One answer.**
+
+1. Should the lab design doc keep its own copy of the §2 field tables and the §4 dedup rules, or point only to DATA-MODEL.md?
+
+---
+
+**On "Should the lab design doc keep its own copy of the §2 field tables and the §4 dedup rules, or point only to DATA-MODEL.md?"**
+
+What I would choose: Point only to DATA-MODEL.md, and fix the stale §3c, §6 and §9 paste lines the same way. Two copies already went wrong once, in §4.
+
+What I already checked: The card's "Not this card" section says link only. AC #2 says one home per field. Rob's Project-Doc-Standard makes DATA-MODEL.md the only source of truth. Every builder and reviewer on this card has left this question open.
+
+**Pass** is one line per question above, naming what you want, or "go with yours".
+Move the card to `todo/` when you have answered it and the build session reads your
+answer before it starts.
+
+**Fail** is no answer: the card sits here and the work behind it stays unreleased.
+
+**Why it needs you.** The review could not settle this by reading the repository or by
+looking up ordinary practice. It turns on a preference, a cost or a risk that is yours.
+The rest of the review, including what each reviewer checked, is the dated entry at the
+bottom of the card's comment thread.
+
 ## Why
 The repo has none of the four anchors the Project Doc Standard requires beyond the handover: no
 root `CLAUDE.md` tripwire, no `docs/PRD.md`, no `docs/DATA-MODEL.md`, no `docs/DECISIONS.md`.
@@ -27,7 +52,7 @@ agreed. Where a source is missing, mark the gap loudly rather than filling it.
       and `docs/HANDOVER.md` SHALL link it in one line rather than restating it.
 - [x] #5 WHEN the doc set is complete, THE REPO SHALL have every relative markdown link resolve to
       a file that exists.
-- [x] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
+- [ ] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
       endpoints from the design doc §6 alongside the other domains, which it currently omits.
 <!-- AC:END -->
 
@@ -288,3 +313,74 @@ claim. I did not rewrite them (the card says link only); they are listed as a kn
 No test: no criterion here carries a `proves:` and every change is markdown, so Pint had nothing to
 check. `.\vendor\bin\pest.bat` does not exist here; the suite ran under PHPUnit. Still left for Rob:
 whether moving the §2 field tables out of the design doc was over the fence.
+
+### 2026-09-28 review (v20260928194222-7ae9)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 27s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I checked each criterion against the code. I found no defect.
+
+- **#1:** The root `CLAUDE.md` exists. Its first instruction says to read `docs/HANDOVER.md`. Met.
+- **#2:** `docs/DATA-MODEL.md` now matches the code.
+  - `LabResultImporter::resolvePanel()` upserts panels on `client_id` = the order id. The doc says the same.
+  - `PkbTestImportService::mapDataPoint()` builds its sha1 from three parts. The doc says the same.
+  - `LabResultController::store()` sets no `external_id`. The doc says the same.
+  - The design doc §4 no longer holds the wrong copy of the dedup rules. It says those rules were never built, and it links to `DATA-MODEL.md`.
+  - The design doc still has old claims that paste goes through `/import` (§3, §3c, §6, §9). `DATA-MODEL.md` lists all four under "Known divergences", so a reader is warned. Met.
+- **#3:** `docs/DECISIONS.md` has D1 to D4 and the architecture table. D4 now sends paste to `POST /lab-results`, and `LabResultController::parse()` matches that. Met.
+- **#4:** `docs/PRD.md` exists, and `HANDOVER.md` links it in one line. The PRD now closes the `feat/lab-results` question. Met.
+- **#5:** Two links in `docs/board/README.md` do not resolve. Both are example links that the `/handover` skill owns, so they are not real links. Met.
+- **#6:** The README lists all ten lab endpoints. The `/lab-results/import` row now says "`file` or `payload`", which is what `LabImportController::pkb()` takes. Met.
+
+VERDICT: sound
+
+**scope: decision**
+
+The fixes from the last review hold. `docs/PRD.md` now closes the `feat/lab-results` question. `README.md` says `/lab-results/import` takes a PKB `file` or `payload` only. D4 in `docs/DECISIONS.md` sends confirmed paste to `POST /lab-results`. The design doc header now says "built".
+
+**Over the fence, still open.** The card says two things that clash. It says "not touching the lab design doc beyond linking it" and "leave §2 in place". It also asks for "one home per field" (#2). The builder chose #2. It removed the field tables from §2 of `docs/spec/lab-results-design.md` and cut the body of §4 to one link. It also rewrote the header. Each review has raised this, and each builder has left it for Rob. The repo cannot settle it, because the card itself gives two rules.
+
+**Left half done because of that fence.** The same design doc still sends paste through `/import`. It does this in §3c ("User confirms → `/import`"), in the §6 row for `/lab-results/import`, and in §9 step 7. That clashes with D4. The builder did not fix these lines, but did list them under "Known divergences" in `docs/DATA-MODEL.md`. That list is the doc's own place for this, so this alone is not a defect.
+
+**Beyond the ask.** The builder rewrote much more of `docs/HANDOVER.md` than the two sections the card named. The builder said so and measured each change, and nothing in it is false.
+
+I found no criterion that fails.
+
+QUESTION: Should the lab design doc keep its own copy of the §2 field tables and the §4 dedup rules, or point only to DATA-MODEL.md?
+RESEARCHED: The card's "Not this card" section says link only. AC #2 says one home per field. Rob's Project-Doc-Standard makes DATA-MODEL.md the only source of truth. Every builder and reviewer on this card has left this question open.
+I WOULD CHOOSE: Point only to DATA-MODEL.md, and fix the stale §3c, §6 and §9 paste lines the same way. Two copies already went wrong once, in §4.
+
+VERDICT: decision
+
+**breakage: defect**
+
+I found one real break. It is small.
+
+**What breaks**
+
+- `README.md`, "Lab / Test Results" table, row `POST /lab-results`, says: "Manual create (optional inline panel fields)".
+- The code does not do this. `LabResultController::store()` sends the validated data to `LabResult::create()`. It makes no panel.
+- `StoreLabResultRequest` accepts `lab_order_id`, but `store()` drops it. Card 0008 already records that bug.
+- `docs/DATA-MODEL.md`, "Dedup keys", says the correct thing: `POST /lab-results` "writes no `external_id` and no panel".
+- So the two docs that this card wrote disagree. A client that follows the README will send panel fields and expect a panel. It gets a result with `lab_panel_id = null`, and nothing tells it why.
+
+**What holds**
+
+- The `lab_panels.client_id` row and the sha1 rule in `DATA-MODEL.md` match `LabResultImporter::resolvePanel()` and `PkbTestImportService::mapDataPoint()`.
+- Design doc §4 now only links to `DATA-MODEL.md`.
+- D4 now sends paste rows to `POST /lab-results`. That matches the note that `LabResultController::parse()` returns.
+- The stale "/import takes paste" text in design doc §3c, §6 and §9 is listed as a known divergence.
+- Some model and service docblocks still point at the old path `docs/lab-results-design.md`. That move happened before this card, so I did not count it.
+
+UNMET: #6 the README row for `POST /lab-results` says it takes "optional inline panel fields", but `LabResultController::store()` makes no panel, and `DATA-MODEL.md` says so.
+
+VERDICT: defect
+
+**acceptance**
+
+- **#6 reopened**, by the breakage lens: the README row for `POST /lab-results` says it takes "optional inline panel fields", but `LabResultController::store()` makes no panel, and `DATA-MODEL.md` says so.
+
