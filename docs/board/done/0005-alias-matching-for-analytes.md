@@ -375,3 +375,16 @@ WHY: No criterion is disproved, and the one open point is how much risk Rob acce
 
 OUTCOME: question
 
+**2026-09-30** **Decided:** 1, keep the seeded aliases. Settled by reading them rather than by
+asking. Every entry in `LabTestDefinitionSeeder::run()` is a spelling, an expansion or a
+report-style name of the analyte it sits on: the GP-system strings such as "GFR calculated
+abbreviated MDRD" and "HbA1c level (IFCC standardised)" are the standard names for exactly those
+tests, and no alias is the name of a neighbouring analyte ("Bilirubin" cannot take a conjugated
+bilirubin and "Iron" cannot take a binding capacity, because matching is exact after slugging).
+`test_seeded_aliases_are_unique_across_the_catalog` refuses a name claimed twice, so the only
+wrong-merge route is a seeded string equal to a different test's real name, and there is none. A
+miss costs nothing hidden: it appears as a separate uncurated series, which card `0001`'s capture
+will list. The last review found acceptance and breakage sound, so the card goes to `done/`. Left
+for whichever session next writes the handover: `docs/HANDOVER.md` "What's next" still describes
+0005 as in progress.
+
