@@ -352,3 +352,26 @@ VERDICT: sound
 
 
 **2026-09-28** The reviewer's acceptance lens returned this card sound: I checked the model: `app/Models/LabTestDefinition.php`. Each criterion traces to real code. The reviewer's scope lens returned this card defect: I found three scope problems. None of them breaks an acceptance criterion. The reviewer's breakage lens returned this card sound: I tried to break the latest change and I could not. No acceptance criterion is disproved. The loop moved it from todo/ to human-review/ because it has bounced 3 times between todo and ai-review, all 5 criteria ticked. THE BUILDER COULD NOT ACT ON THAT FINDING. A reviewer reopens every criterion it reports unmet, and the reviews that sent this card back named no criterion they disproved, so it came back with 5 of 5 criteria still ticked, every session found nothing open to do, and the loop promoted it again on the boxes. Add or reopen the criterion the finding breaks and move it back to todo/, or say here why the finding is wrong.
+
+### 2026-09-30 manager (m20260930012953-f99a)
+
+**outcome: question**
+
+No criterion is disproved, and the one open point is how much risk Rob accepts for his own lab history.
+
+**The question:** Do you keep the ~120 seeded aliases (1), or cut them to the plain pairs until card 0001's capture shows the real names (2)?
+
+**what the session said**
+
+I read the code. The three scope findings do not break any criterion.
+
+- **Finding 1 (the old line in HANDOVER):** It is still there. `docs/HANDOVER.md`, in "What's next", still says 0005 is in `in-progress/`. It is only a docs chore. No criterion covers it.
+- **Finding 2 (moving the PKB id):** `LabTestDefinition::resolveForImport()` moves the id through `matchCurated()`. This change is what makes #5 pass for old rows. You cannot call it a scope defect and also need it for #5.
+- **Finding 3 (the guessed aliases):** This one is real. `LabTestDefinitionSeeder::run()` writes about 120 aliases, such as "GFR calculated abbreviated MDRD". Every seeded row gets `is_curated => true`. Which aliases to keep is a choice about risk to Rob's own health record. The builder cannot settle that from the code. The card's "What I need from you" section already asks Rob this question.
+
+QUESTION: Do you keep the ~120 seeded aliases (1), or cut them to the plain pairs until card 0001's capture shows the real names (2)?
+
+WHY: No criterion is disproved, and the one open point is how much risk Rob accepts for his own lab history.
+
+OUTCOME: question
+
