@@ -50,3 +50,6 @@ what turns a one-commit branch into a merge conflict.
 
 
 **2026-08-16** Merge now, treat 0001's findings as follow-ups
+
+**2026-10-04** RESULT: done
+TOUCHED: no cards written. Nothing is left to build: the answer (merge now, treat 0001's findings as follow-ups) is already carried out. Phase 6 and the SPA view are on master (from f03b1db), the feat/lab-results branch no longer exists, and card 0001's ## Links already records that whatever its capture finds becomes a follow-up rather than a reason to hold anything. Any schema change that capture turns up gets its own card when 0001 writes its findings, not before.
