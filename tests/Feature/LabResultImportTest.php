@@ -354,6 +354,17 @@ class LabResultImportTest extends TestCase
         $panel = LabPanel::withoutGlobalScopes()->findOrFail($panelId);
         $this->assertSame('ORDER9', $panel->lab_order_id);
         $this->assertSame($user->id, $panel->user_id);
+
+        // A different order that already has an (imported) panel → the result moves to that panel.
+        app(PkbTestImportService::class)->import($user, $this->pkbPayload());
+        $imported = LabPanel::withoutGlobalScopes()->where('client_id', 'ORDER1')->sole();
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/lab-results/$id", $row + ['lab_order_id' => 'ORDER1'])
+            ->assertOk();
+
+        $this->assertSame($imported->id, LabResult::withoutGlobalScopes()->findOrFail($id)->lab_panel_id);
+        $this->assertSame('pkb_json', $imported->fresh()->source);
     }
 
     /** A name that matches no slug but does match an alias resolves, case and spacing aside. */
