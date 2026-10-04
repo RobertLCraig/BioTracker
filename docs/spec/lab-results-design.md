@@ -114,14 +114,14 @@ range_high:3, abnormal_flag:low (derived), sampled_at:2026-07-17 }`, attached to
 
 ## 3. Ingest paths
 
-All paths normalise to the **same DTO** (`array` of panels each with result lines) and pass
-through one importer, so dedup/validation/audit live in one place. Ordered by reliability:
+As built, only PKB JSON goes through the shared importer; manual entry and confirmed paste rows
+go through `POST /lab-results`. Which path dedups, and on what key, is in
+[../DATA-MODEL.md](../DATA-MODEL.md#one-shape-three-ingest-paths). Ordered by reliability:
 
 ```
-PKB JSON  ──┐   (PRIMARY — real structured data, §3a)
-manual form ┼─▶ LabResultDTO[] ─▶ LabResultImporter ─▶ dedup ─▶ persist ─▶ audit
-PKB paste  ─┘        ▲
-                     └── PkbTestJsonImporter (json)  /  LabResultParser (paste, fallback)
+PKB JSON  ───▶ PkbTestImportService ─▶ LabResultImporter ─▶ dedup ─▶ persist ─▶ audit   (PRIMARY, §3a)
+manual form ─▶ POST /lab-results ─▶ persist ─▶ audit
+PKB paste ───▶ POST /lab-results/parse (preview) ─▶ user confirms ─▶ POST /lab-results   (fallback)
 ```
 
 ### 3a. PKB JSON import  ✅ PRIMARY PATH
@@ -136,7 +136,7 @@ This is the canonical import.
 - Idempotent: re-importing the same file changes nothing (same `external_id`s).
 
 ### 3b. Manual entry
-- `POST /api/v1/lab-results` (single result; optional inline panel fields).
+- `POST /api/v1/lab-results` (single result; an optional `lab_order_id` joins that order's panel).
 - `StoreLabResultRequest` validates: `test_name` required; `value_text` required;
   `unit`, range, `sampled_at` optional; enums validated.
 - Standard CRUD (`index/show/update/destroy`) mirroring `VitalLogController`.
@@ -144,7 +144,7 @@ This is the canonical import.
 ### 3c. Paste from PKB  ⚠ fallback, best-effort
 - For when JSON capture isn't handy — paste the rendered "Latest" table text.
 - `POST /api/v1/lab-results/parse` → `LabResultParser` (heuristic rows) → **preview, no
-  persist**. User confirms → `/import`. Always shows what it understood before writing.
+  persist**. User confirms → each row to `POST /lab-results`. Always shows what it understood before writing.
 - Lossy vs JSON (no LOINC id, no per-datapoint id, comparator/range less reliable) — prefer 3a.
 
 ---
@@ -184,7 +184,7 @@ carry `value: null` and are skipped by the chart.
 | GET | `/api/v1/lab-panels` | list orders/panels with nested results |
 | GET | `/api/v1/lab-panels/{id}` | one panel + its results |
 | POST | `/api/v1/lab-results/parse` | paste → parsed preview (no write) |
-| POST | `/api/v1/lab-results/import` | file upload **or** confirmed paste → queued import |
+| POST | `/api/v1/lab-results/import` | PKB JSON `file` upload or inline `payload` → import (queued over 2 MB) |
 
 All under `auth:sanctum` + `EnsureTotpVerified`, like the rest of `/api/v1`.
 
@@ -226,7 +226,7 @@ D1 to D4, each with the reasoning behind it, were promoted to
 5. `LabResultImporter` (shared) + dedup on `external_id`.
 6. **`PkbTestJsonImporter` + `ProcessLabImportJob` + `POST /lab-results/import`** — maps the
    §2.5 shape; the primary path. Build against the captured `pkb-tests.json`.
-7. `LabResultParser` (paste) + `/parse` (preview) + `/import` (confirmed paste) — fallback.
+7. `LabResultParser` (paste) + `/parse` (preview); confirmed rows go to `POST /lab-results` — fallback.
 8. Trends endpoint via `AnalyticsService`; lab section in `ReportExportService`.
 9. Tests + `../build/PROJECT_STATUS.md` Phase 6 entry + promote schema to `../DATA-MODEL.md`.
 
