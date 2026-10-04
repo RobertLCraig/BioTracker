@@ -115,3 +115,5 @@ I tried to break card 0009. I could not.
 
 VERDICT: sound
 
+
+**2026-10-04** The reviewer's acceptance lens returned this card sound: The card makes one promise, #1. The code keeps it. The reviewer's scope lens returned this card defect: I checked what the change did beyond what the card asks for. The reviewer's breakage lens returned this card sound: I tried to break card 0009. I could not. The loop moved it from todo/ to human-review/ because it has bounced 1 time between todo and ai-review, all 1 criteria ticked. THE BUILDER COULD NOT ACT ON THAT FINDING. A reviewer reopens every criterion it reports unmet, and the reviews that sent this card back named no criterion they disproved, so it came back with 1 of 1 criteria still ticked, every session found nothing open to do, and the loop promoted it again on the boxes. Add or reopen the criterion the finding breaks and move it back to todo/, or say here why the finding is wrong.
