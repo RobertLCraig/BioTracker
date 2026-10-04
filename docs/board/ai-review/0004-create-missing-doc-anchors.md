@@ -52,7 +52,7 @@ agreed. Where a source is missing, mark the gap loudly rather than filling it.
       and `docs/HANDOVER.md` SHALL link it in one line rather than restating it.
 - [x] #5 WHEN the doc set is complete, THE REPO SHALL have every relative markdown link resolve to
       a file that exists.
-- [ ] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
+- [x] #6 WHEN a reader consults `README.md`'s API reference, THE REPO SHALL list the ten lab
       endpoints from the design doc §6 alongside the other domains, which it currently omits.
 <!-- AC:END -->
 
@@ -386,3 +386,16 @@ VERDICT: defect
 
 **2026-09-29** **Decided:** Point only to DATA-MODEL.md. The design doc keeps its reasoning and links to `docs/DATA-MODEL.md` for the §2 field tables and the §4 dedup rules, and its stale §3c, §6 and §9 lines about paste going through `/import` get the same fix. Settled by an attended agent under Rob's rule that human-review holds only what he must decide. The source is `C:\Dev\About-Me\Project-Doc-Standard.md`, "Single source of truth": each concern lives in one doc and other docs link to it rather than copy it. The second copy in §4 has already gone wrong once on this card. Still owed before review is #6: the README row for `POST /lab-results` says "optional inline panel fields", but `LabResultController::store()` makes no panel.
 
+**2026-10-04** RESULT: done
+TESTS: +0 new, all green (20 tests, 105 assertions, `.\vendor\bin\phpunit.bat`)
+TOUCHED: README.md, docs/DATA-MODEL.md, docs/spec/lab-results-design.md
+OUT-OF-SCOPE: none
+
+Closed #6 and acted on the 2026-09-29 decision, each line checked against the code:
+- #6: README's `POST /lab-results` row said "optional inline panel fields". `StoreLabResultRequest` takes one panel field, `lab_order_id`, and `LabResultController::withPanel()` joins or creates that order's panel (cards 0008/0009). The row now says exactly that.
+- Decision: the design doc's §3 diagram, §3b, §3c, the §6 `/lab-results/import` row and §9 step 7 no longer send paste through `/import` or the importer; confirmed rows go to `POST /lab-results`, matching `LabResultController::parse()`. §2 and §4 already pointed only at DATA-MODEL.md. The matching "Known divergences" entry in DATA-MODEL.md is struck through as closed.
+- DATA-MODEL.md "Dedup keys" still said `PUT` drops `lab_order_id`; `update()` now calls `withPanel()` too (card 0009), so the line says it joins the same way.
+
+Link check (#5) over every tracked *.md: only the two skill-owned example links in docs/board/README.md fail, as before.
+
+No test: no criterion carries a `proves:` and every change is markdown, so Pint had nothing to check. `.\vendor\bin\pest.bat` does not exist here; the suite ran under PHPUnit. Left as is: the design doc §3a and §9 still name `PkbTestJsonImporter`; that is an already-listed divergence outside this decision.
