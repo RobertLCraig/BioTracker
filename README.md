@@ -140,7 +140,7 @@ All endpoints are prefixed with `/api/v1/`. Protected routes require `Authorizat
 | Method | Endpoint                    | Description              |
 |--------|-----------------------------|--------------------------|
 | GET    | `/lab-results`              | List results; filters: `test_key`, `from`, `to`, `abnormal`, `panel`, `source` |
-| POST   | `/lab-results`              | Manual create (optional inline panel fields) |
+| POST   | `/lab-results`              | Manual create; an optional `lab_order_id` joins (or creates) that order's panel |
 | GET    | `/lab-results/{id}`         | Show one result          |
 | PUT    | `/lab-results/{id}`         | Update a result          |
 | DELETE | `/lab-results/{id}`         | Delete a result          |

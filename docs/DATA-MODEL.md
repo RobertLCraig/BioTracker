@@ -263,7 +263,7 @@ required foreign key should prevent.
 - **Lab, manual or paste:** no dedup. `POST /lab-results` writes no `external_id`, so the same
   result posted twice is two rows. A posted `lab_order_id` joins the user's panel on
   `(user_id, client_id)`, created as `source = manual` if none exists; an existing panel is not
-  overwritten. `PUT` still drops `lab_order_id` (card 0009). Paste (`POST /lab-results/parse`) never persists; its
+  overwritten. `PUT` joins the same way (card 0009). Paste (`POST /lab-results/parse`) never persists; its
   confirmed rows go through that same `POST /lab-results`.
 - **The five log tables:** `client_id`, supplied by the client, unique per table.
   `activity_logs` has no `client_id` column — it keeps the value inside its `metadata` JSON.
@@ -290,9 +290,7 @@ The PKB JSON → column map is [spec/lab-results-design.md](spec/lab-results-des
 - **The importer class is named `PkbTestImportService`**, not `PkbTestJsonImporter` as
   [spec/lab-results-design.md](spec/lab-results-design.md) §3a and §9 still call it. The code is
   right; the design doc's name is stale.
-- **The design doc still routes paste and manual entry through the importer and `/import`.**
-  [spec/lab-results-design.md](spec/lab-results-design.md) §3's diagram, §3c ("User confirms →
-  `/import`") and the §6 row for `/lab-results/import` ("file upload **or** confirmed paste")
-  and §9 step 7 predate the build. `LabImportController::pkb()` takes a PKB `file` or `payload` only; confirmed
-  paste rows go to `POST /lab-results`, as [One shape, three ingest paths](#one-shape-three-ingest-paths)
-  says.
+- ~~**The design doc routed paste and manual entry through the importer and `/import`.**~~
+  Closed by card 0004: §3's diagram, §3c, the §6 `/lab-results/import` row and §9 step 7 now send
+  confirmed paste rows to `POST /lab-results`, as
+  [One shape, three ingest paths](#one-shape-three-ingest-paths) says.
