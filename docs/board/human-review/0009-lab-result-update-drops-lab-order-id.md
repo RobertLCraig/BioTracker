@@ -117,3 +117,24 @@ VERDICT: sound
 
 
 **2026-10-04** The reviewer's acceptance lens returned this card sound: The card makes one promise, #1. The code keeps it. The reviewer's scope lens returned this card defect: I checked what the change did beyond what the card asks for. The reviewer's breakage lens returned this card sound: I tried to break card 0009. I could not. The loop moved it from todo/ to human-review/ because it has bounced 1 time between todo and ai-review, all 1 criteria ticked. THE BUILDER COULD NOT ACT ON THAT FINDING. A reviewer reopens every criterion it reports unmet, and the reviews that sent this card back named no criterion they disproved, so it came back with 1 of 1 criteria still ticked, every session found nothing open to do, and the loop promoted it again on the boxes. Add or reopen the criterion the finding breaks and move it back to todo/, or say here why the finding is wrong.
+
+### 2026-10-04 manager (m20261004174001-24a2)
+
+**outcome: rob**
+
+The code does what the card asks, and the only finding is one out-of-date line in `docs/DATA-MODEL.md`, which no criterion covers. So a person must fix that line and close the card.
+
+**what the session said**
+
+I read the code and the docs. Here is what I found.
+
+- **The code is good.** `LabResultController::update()` now sends its data through `LabResultController::withPanel()`. That function finds or makes the user's panel for the order. So criterion #1 is met. The acceptance and breakage reviews say the same.
+- **The defect is real, but it is in the docs only.** `docs/DATA-MODEL.md` still says "`PUT` still drops `lab_order_id` (card 0009)". That is in the section "One shape, three ingest paths". It is now false.
+- **The defect breaks no criterion.** The card has only one criterion, #1, and it is about how the API behaves. A wrong line in the docs does not disprove it. If I reopen the card, the builder will find nothing open, and the card will come straight back. That already happened one time.
+
+What is left is a small job, not a question. Someone deletes or rewrites that one line, then accepts the card.
+
+WHY: The code does what the card asks, and the only finding is one out-of-date line in `docs/DATA-MODEL.md`, which no criterion covers. So a person must fix that line and close the card.
+
+OUTCOME: rob
+
