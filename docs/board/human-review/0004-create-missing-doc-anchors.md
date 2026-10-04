@@ -399,3 +399,67 @@ Closed #6 and acted on the 2026-09-29 decision, each line checked against the co
 Link check (#5) over every tracked *.md: only the two skill-owned example links in docs/board/README.md fail, as before.
 
 No test: no criterion carries a `proves:` and every change is markdown, so Pint had nothing to check. `.\vendor\bin\pest.bat` does not exist here; the suite ran under PHPUnit. Left as is: the design doc §3a and §9 still name `PkbTestJsonImporter`; that is an already-listed divergence outside this decision.
+
+### 2026-10-04 review (v20261004190446-58ca)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 40s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+I checked all six criteria against the code. I could not break any of them.
+
+- **#1:** The root `CLAUDE.md` exists. Its first instruction says "read `docs/HANDOVER.md`". Met.
+- **#2:** `docs/DATA-MODEL.md` matches the code.
+  - `LabResultImporter::resolvePanel()` sets `client_id` to the order id.
+  - `PkbTestImportService::mapDataPoint()` makes its sha1 from three parts.
+  - `LabResultController::store()` and `update()` use `withPanel()` to join a panel by `(user_id, client_id)`. They write no `external_id`.
+  - In `docs/spec/lab-results-design.md`, §2 and §4 now only link to `DATA-MODEL.md`. They keep no second copy of the rules. §3 and §3c now send paste rows to `POST /lab-results`.
+- **#3:** `docs/DECISIONS.md` has D1 to D4 and the architecture table, each with its reason. D4 now says paste goes to `POST /lab-results`, which matches the code.
+- **#4:** `docs/PRD.md` exists. `docs/HANDOVER.md` links to it in one line.
+- **#5:** Only two links do not resolve. Both are example links in `docs/board/README.md`. They are not real links, and a skill owns that file.
+- **#6:** `README.md` lists all ten lab endpoints. The `/import` row describes what `LabImportController::pkb()` really takes.
+
+Some old text is still in the design doc. §3a still uses the old class name `PkbTestJsonImporter`, which `DATA-MODEL.md` lists as a known divergence. §3a also says the import always goes through the queue. The code only does that for files over 2 MB. Neither problem breaks a criterion.
+
+The scope question is still yours: should the design doc keep its own copy of the §2 tables? It is outside my lens, so it does not change this verdict.
+
+VERDICT: sound
+
+**scope: decision**
+
+I checked the scope of card 0004. I found no new defect.
+
+**What is fixed now:**
+- The design doc status line says "built". It does not contradict itself now. See `docs/spec/lab-results-design.md`, the header.
+- §4 has no second copy of the dedup rules. It is one link to `DATA-MODEL.md#dedup-keys`.
+- In §3, §3c, §6 and §9, confirmed paste now goes to `POST /lab-results`.
+- The `feat/lab-results` question in the `docs/PRD.md` "Open questions" list is closed, and the list says so.
+
+**What is still over the fence:** the §2 field tables, the enum block and the flag rule are no longer in the design doc. The card says "leave §2 in place" and "link only". But AC #2 says "one home per field". These two rules disagree. Only Rob can choose between them.
+
+**Not this card:** the diff also shows PHP and Vue changes, for example `LabResultController::withPanel()` and `LabTestDefinition::matchAlias()`. Those changes belong to cards 0003, 0005, 0007, 0008 and 0009. They came in with the commit range. I do not count them against card 0004.
+
+**Small leftover, not a defect:** §3a and §9 still call the importer `PkbTestJsonImporter`. `DATA-MODEL.md` lists this as a known divergence.
+
+QUESTION: Should the lab design doc keep its own copy of the §2 field tables, or only link to DATA-MODEL.md?
+RESEARCHED: Rob's Project-Doc-Standard makes DATA-MODEL.md the one source of truth. AC #2 says one home per field. The card's "Not this card" section says link only. When this doc had two copies (§4), they did not agree with each other.
+I WOULD CHOOSE: Link only to DATA-MODEL.md. A second copy goes stale, and that already happened once in §4.
+
+VERDICT: decision
+
+**breakage: sound**
+
+I tried to break the doc set. I could not.
+
+- **Panel key:** `LabResultController::withPanel()` joins a panel on `(user_id, client_id = lab_order_id)`, on create and on update. `docs/DATA-MODEL.md` "Dedup keys" says the same. So does the `README.md` row for `POST /lab-results`.
+- **Design doc §4:** The old wrong rules (panel keyed on the lowest `external_id`, and a sha1 for manual and paste) are gone. Now §4 says those rules were never built, and it links to `DATA-MODEL.md`.
+- **The import endpoint:** In the design doc, every place that names `/lab-results/import` now gives only PKB JSON, a `file` or a `payload`. This agrees with `LabImportController::pkb()`, `README.md` and D4 in `docs/DECISIONS.md`. None of them says paste goes to `/import` now.
+- **Stale class name:** The design doc still calls the importer `PkbTestJsonImporter` in §3a and §9. The real class is `PkbTestImportService`. `DATA-MODEL.md` "Known divergences" lists this already, so it is a known gap, not silent breakage.
+- **Tests:** The suite is green.
+
+None of the six criteria fails.
+
+VERDICT: sound
+
