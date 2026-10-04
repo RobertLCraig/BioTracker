@@ -463,3 +463,25 @@ None of the six criteria fails.
 
 VERDICT: sound
 
+### 2026-10-04 manager (m20261004193757-be3a)
+
+**outcome: rob**
+
+The scope question was already decided on 2026-09-29, and the work looks finished, so Rob only needs to read it and close the card.
+
+**what the session said**
+
+The open question has an answer already. The card's own thread gives that answer in the **2026-09-29** entry: the design doc links only to `docs/DATA-MODEL.md`. The scope reviewer asked the same question again. It did not see that decision.
+
+I checked the code:
+
+- **#6:** `README.md`, row `POST /lab-results`, now says an optional `lab_order_id` joins or creates that order's panel. `LabResultController::store()` and `LabResultController::update()` do this through `LabResultController::withPanel()`. The row matches the code.
+- **Decision:** In `docs/spec/lab-results-design.md`, §2 and §4 now only link to `DATA-MODEL.md`. §3a and §6 say `/lab-results/import` takes only PKB JSON (a `file` or a `payload`). No paste goes to `/import` now.
+- **Reviews:** All three 2026-10-04 lenses found no failed criterion.
+
+There is no work open for the builder, and no new question. The work looks finished. A person must do the last step.
+
+WHY: The scope question was already decided on 2026-09-29, and the work looks finished, so Rob only needs to read it and close the card.
+
+OUTCOME: rob
+
