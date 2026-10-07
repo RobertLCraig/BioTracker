@@ -485,3 +485,5 @@ WHY: The scope question was already decided on 2026-09-29, and the work looks fi
 
 OUTCOME: rob
 
+
+**2026-10-07** Closed as done: nothing left to decide or build. The one question was answered on 2026-09-29 (design doc links only to DATA-MODEL.md), the 2026-10-04 build applied it, and all three 2026-10-04 review lenses found no failed criterion. Checked today: `docs/spec/lab-results-design.md` sections 2 and 4 link to `DATA-MODEL.md` and no line sends paste to `/import`.

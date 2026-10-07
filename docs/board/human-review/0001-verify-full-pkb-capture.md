@@ -1,59 +1,32 @@
-# Verify the lab import against a full PKB capture
+# Download your full test history from Patients Know Best
 
 ## What I need from you
+Save your whole PKB test history as `C:\Dev\BioTracker\storage\app\private\pkb-tests.json`.
+1. Log in at <https://my.patientsknowbest.com>. Open **Health → Tests**, click the **Trend** tab, set the date range to **All**. Pass: every test you have ever had is listed, not just cholesterol.
+2. Press **F12**, open **Console**, type `allow pasting` and Enter if it asks. Paste the snippet under "Method A" in `C:\Dev\BioTracker\docs\spec\lab-results-design.md` (section 11) and press Enter. Pass: it prints "Done — saved N tests" and your browser downloads `pkb-tests.json`. Fail: an error or N = 0 means you were logged out; log in and run it again.
+3. Move the file to `C:\Dev\BioTracker\storage\app\private\pkb-tests.json` and write N in Comments. Pass: N is well above 6. Do not paste the file's contents into a chat.
 
-**Capture your full test history from PKB and save it to `storage/app/private/pkb-tests.json`.**
-Four steps in your own browser session, below. Nothing else on this card can start until that file
-is on disk.
+**My recommendation:** do it. It is the only way to know the lab import works on more than one blood test.
+Paste to answer: `**2026-10-07** **Decided:** File saved, N = <number>.` (or `Not wanted, discard.`)
 
-1. Log in at <https://my.patientsknowbest.com>, open **Health → Tests**, click the **Trend** tab
-   and set the date range to **All**.
-   Pass: every analyte is listed on the page. Fail: a short or empty list means the date range did
-   not apply, and the capture would miss older tests.
-2. Press **F12** → **Console**, type `allow pasting` and Enter if it asks, then paste the Method A
-   snippet from [../../spec/lab-results-design.md](../../spec/lab-results-design.md) §11.
-   Pass: the console reports a test count and the browser downloads `pkb-tests.json`. Fail: a 403
-   or an empty `tests[]` means the session expired, so log in again and re-run.
-3. Open the downloaded file and check it holds more than the six lipids (search for
-   `testHistoryMetadata` and count the hits).
-   Pass: many analytes. Fail: six only means step 1's Trend/All did not take.
-4. Save it as `storage/app/private/pkb-tests.json` in this repo and say so in the session. That
-   path is gitignored (verified), so the results never reach git. Do not paste the contents into
-   chat.
+## What you need to know
+- The lab import was built and checked against one cholesterol panel only: 6 results.
+- Everything else it claims to handle (text-only results, values like `>60`, odd reference ranges, corrected results) has never met real data.
+- PKB has no export button and no API. Only your logged-in browser can fetch it, so no agent can.
+- The snippet only reads your own data over your own session. It sends nothing anywhere.
+- The file stays out of git: that folder is ignored.
 
-**Pass** is that file on disk carrying more than the six lipids, with the analyte count said out
-loud so the import can be checked against it.
+## See it
+- PKB: <https://my.patientsknowbest.com>
+- Where the results will show: <https://biotracker.test/labs>
 
-**Fail** is named per step above. The one to watch is step 3: six results only means step 1's
-Trend/All did not apply, and importing that file would re-verify the field map against the same
-single panel it was written from, which is the thing this card exists to stop.
+---
+## For the agent (Rob can stop reading here)
+When the file is on disk: import it (`POST /api/v1/lab-results/import` with a Sanctum token, or `PkbTestImportService` in tinker). Record counts: panels, results, definitions matched by `pkb_type_id`, by slug, by alias, and auto-created uncurated. List every uncurated definition created and whether a seeded row already meant the same analyte; that list feeds a second alias pass (card 0005's aliases were guessed from UK pathology naming). Spot-check five flags against the portal. Write findings here.
 
-**Why it needs you** It needs your logged-in PKB session. There is no export button and no API to
-authenticate against, so this is the one step of Phase 6 that no agent and no test can reach.
+Not this card: curating the catalog, UI, alias matching itself.
 
-## Why
-Phase 6 shipped verified against a single captured lipid panel (1 panel, 6 results). The field map
-in §2.5 was written from that one sample, so every other shape it claims to handle (text-only
-results, comparators like `>60`, non-numeric ranges, embargoed `delayedDisplayDate` results,
-withdrawn and corrected status) is mapped but has never met real data.
-
-## Links
-
-**Relates to**
-- `0002` - the merge decision this capture could have changed. It was answered on 2026-08-16 to
-  merge now and treat whatever this capture finds as a follow-up, so nothing here holds it up.
-- `0003` - the Lab Results view, which is the screen this capture's data would appear on. The
-  seeded demo account writes no lab rows, so that view has only ever been seen against its empty
-  state.
-- `0005` - alias matching. Its aliases were guessed from ordinary UK pathology naming, and the
-  list of uncurated definitions this capture creates is the real evidence a second pass needs.
-
-## Not this card
-Not curating the analyte catalog, not adding alias matching (card 0005), not building any UI
-(card 0003), and not merging the branch (card 0002). This card ends when one full capture has been
-imported and the mismatches are written down.
-
-## Acceptance
+### Acceptance
 <!-- AC:BEGIN -->
 - [ ] #1 WHEN the full capture is imported, THE APP SHALL create panels and results without an
       unhandled exception, and report how many of each it created.
@@ -67,13 +40,6 @@ imported and the mismatches are written down.
       THE APP SHALL agree with the portal on every one.
 <!-- AC:END -->
 
-## Tasks
-- [ ] Rob captures `pkb-tests.json` per the steps above.
-- [ ] Import it, either `POST /api/v1/lab-results/import` with a Sanctum token or
-      `PkbTestImportService` under `php artisan tinker`, whichever is quicker.
-- [ ] Record the counts: panels, results, definitions matched by `pkb_type_id`, matched by slug,
-      auto-created uncurated.
-- [ ] List every uncurated definition created, and say whether a seeded row already meant the same
-      analyte. That list is the input to card 0005.
-- [ ] Spot-check five flags against the portal.
-- [ ] Write the findings into this card before moving it on.
+**Related:** 0003 (done) is the Labs view this data appears on; the demo account has no lab rows, so it has only been seen empty. 0005 (done) is alias matching, which this capture tests on real names.
+
+## Comments

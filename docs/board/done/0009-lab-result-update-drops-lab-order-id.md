@@ -138,3 +138,5 @@ WHY: The code does what the card asks, and the only finding is one out-of-date l
 
 OUTCOME: rob
 
+
+**2026-10-07** Closed as done. The only finding was a stale line in `docs/DATA-MODEL.md` ("PUT still drops `lab_order_id`"); commit c5057cd already rewrote it to "`PUT` joins the same way (card 0009)". Code and test were reviewed sound on 2026-10-04.
