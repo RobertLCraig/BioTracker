@@ -34,7 +34,7 @@ loop before the first poll does not alert (systemd restarts it). Reformatting th
       proves: `test_login_is_throttled_after_ten_tries_a_minute`
 - [x] #3 WHILE `REGISTRATION_OPEN` is false, THE API SHALL refuse sign-up.
       proves: `test_sign_up_is_refused_when_registration_is_closed`
-- [x] #4 WHEN a message fails after it was taken off the queue, THE BOT SHALL either deliver its
+- [ ] #4 WHEN a message fails after it was taken off the queue, THE BOT SHALL either deliver its
       reply later (if its entries were saved) or ask Rob once to resend it (if nothing was saved),
       never both, and SHALL keep what it owes across a restart.
       proves: `test_a_reply_that_fails_to_send_is_delivered_later_and_the_entry_saved_once`,
@@ -152,4 +152,74 @@ Breakage #2 fixed: what is owed is in the cache store (the database on the serve
 the delayed-reply test polls from a fresh instance to prove it.
 Breakage #3 accepted: the sign-up form shows the server's 403 message, "Sign-up is closed on this
 server." Hiding the link needs the server setting in the SPA build, which is built on the PC.
+
+### 2026-10-17 review (v20261017160227-442f)
+
+**suite**
+
+`vendor\bin\phpunit.bat` exited 0 after 25s, run by this job rather than reported by the card.
+
+**acceptance: sound**
+
+**Verdict: sound.** I checked each of the 7 criteria in the code. I could not break one.
+
+- **#1:** `composer.json` has `config.audit.ignore` with one advisory and a reason. I cannot run `composer audit` or `npm audit` here.
+- **#2:** `routes/api.php` puts a `throttle:10,1` group (10 requests a minute) around register, login, TOTP and passkey login.
+- **#3:** `AuthController::register` stops with `abort_unless(config('auth.registration'), 403)`. `config/auth.php` reads `REGISTRATION_OPEN`.
+- **#4:** I tried to make the bot both deliver a reply and ask Rob to resend for one message. I could not.
+  - `JournalBot::handleUpdate` saves inside one `DB::transaction`.
+  - The feature-request write and the reply send each have their own catch, so nothing after the save can throw.
+  - A reply that fails to send goes to `JournalBot::owe` as a "(Delayed reply)". It does not cause a resend request.
+  - `JournalBot::poll` asks for a resend only when an exception comes out of `handleUpdate`, and that can only happen before the save commits.
+  - What the bot owes is kept in the cache store, so a restart keeps it.
+- **#5:** `JournalBot::poll` sends one push after `ALERT_AFTER` (900 seconds, so 15 minutes). The `$alerted` flag stops a second push. The text has no project name.
+- **#6:** `bin/deploy.sh` refuses uncommitted changes. It ships with `git archive HEAD` and runs the tests on SQLite and Postgres first. It ends with a bot check and a `/up` check. An earlier review confirmed this, and nothing changed it since.
+- **#7:** This was a step on the server. The card comment records the restore.
+
+The commit under review only adds board card 0016. It changes no code.
+
+What you do now: nothing for this card.
+
+VERDICT: sound
+
+**scope: sound**
+
+I tried to break the scope. I could not.
+
+**What I checked**
+- The only diff this run shows is one new file: `docs/board/human-review/0016-log-medicines-that-are-not-on-my-medication-list.md`. It came from commit `138b39f`, which the Telegram bot made on its own. This card did not build it. Card 0016 waits for Rob in `human-review/`. Its words are general and hold none of Rob's data.
+- The card's own work is in the code:
+  - `routes/api.php` has the `throttle:10,1` group on the auth routes.
+  - `config/auth.php` reads `REGISTRATION_OPEN`.
+  - `AuthController::register` uses `abort_unless(...)` to refuse sign-up.
+  - `JournalBot::handleUpdate` saves in one `DB::transaction` and owes the "(Delayed reply)".
+  - `JournalBot::poll` has `ALERT_AFTER` and the ntfy push.
+- Nothing crosses the "Not this card" line. There is no DNS work, no crash-loop alert and no repo-wide reformat.
+- The fix after review touched only `JournalBot.php` and its test, which the comment says.
+
+**Half done**
+- No task is half done. Breakage #3 (the "Sign up" link still shows) was accepted on purpose, and the reason is written down. It is not a criterion.
+
+VERDICT: sound
+
+**breakage: defect**
+
+I tried to break the fix and found one gap.
+
+**What I found**
+
+1. **`JournalBot::handleUpdate` can still throw after the save.** The comment after the transaction says nothing below it may throw, but that is not true. In the `catch` that handles a failed reply, `$this->owe(...)` calls `Cache::put` with no guard. The cache store is the database, so a short database fault after the commit makes `owe()` throw, and the exception leaves `handleUpdate` with the rows already saved.
+   - **Case 1:** the `owe()` in `JournalBot::poll`'s `catch` works. Rob is then told "before anything from it was saved. Please send it again." That is false, and his resend logs the entries twice.
+   - **Case 2:** that second `owe()` also throws, which is likely on the same store. Nothing catches it, so `poll` throws out of `TelegramPoll::handle`. The process dies, and the new offset is never given to Telegram. systemd restarts it with `$offset = 0`, Telegram sends the same update again, and the entries are saved twice with no notice.
+2. **The `Cache::put` in `poll`'s owed-message loop has no guard.** If it fails after a send, `poll` crashes and the same owed message goes out again after the restart. This is minor.
+
+The tests never make a cache write fail, so they cannot see this.
+
+UNMET: #4 `owe()` writes to the cache with no guard after the save transaction commits, so a cache failure there makes `handleUpdate` throw with rows saved, and Rob is either told to resend or the process dies and the update is handled again, so the entries are saved twice.
+
+VERDICT: defect
+
+**acceptance**
+
+- **#4 reopened**, by the breakage lens: `owe()` writes to the cache with no guard after the save transaction commits, so a cache failure there makes `handleUpdate` throw with rows saved, and Rob is either told to resend or the process dies and the update is handled again, so the entries are saved twice.
 
