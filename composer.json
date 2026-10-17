@@ -82,6 +82,11 @@
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
+        "audit": {
+            "ignore": {
+                "PKSA-zk1n-qbm6-d3rq": "Only affects SimpleFakeCredentialGenerator, which PasskeyController never uses. The fix is webauthn-lib 5, a major upgrade."
+            }
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true

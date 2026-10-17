@@ -6,6 +6,12 @@ this project's docs ([docs/PRD.md](docs/PRD.md), [docs/DATA-MODEL.md](docs/DATA-
 proposing changes. Do not act on a partial read. This follows the global project documentation
 standard.
 
+## User data never goes in git
+This repo is public. Rob's own data (lab results, test names, dates, meals, weights, anything the
+app stores for him) belongs to the running app, not the codebase. Cards, docs, examples, fixtures
+and commit messages carry counts, pass/fail and invented values only. Detail about his data goes in
+`storage/app/private/` (git-ignored). Grep the diff for real values before every commit.
+
 ## Conventions
 - PHP is Laravel Herd's and is **not on PATH**: `C:\Users\r\.config\herd\bin\php84\php.exe`.
 - Tests: `.\vendor\bin\phpunit.bat`, or `php artisan test`. The suite is PHPUnit — there is no

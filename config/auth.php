@@ -18,6 +18,9 @@ return [
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
+    // Off on the home server: its one account exists, and a health journal has no sign-up page.
+    'registration' => (bool) env('REGISTRATION_OPEN', true),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards

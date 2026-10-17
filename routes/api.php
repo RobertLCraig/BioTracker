@@ -27,13 +27,16 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // ── Public ──────────────────────────────────────────────────────────────
-    Route::post('/register',    [AuthController::class, 'register']);
-    Route::post('/login',       [AuthController::class, 'login']);
-    Route::post('/login/totp',  [AuthController::class, 'verifyTotp']);
+    // 10 tries a minute per address: a 6-digit TOTP code cannot be guessed at that rate.
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/register',    [AuthController::class, 'register']);
+        Route::post('/login',       [AuthController::class, 'login']);
+        Route::post('/login/totp',  [AuthController::class, 'verifyTotp']);
 
-    // Passkey login (public — no prior auth required)
-    Route::get('/passkeys/challenge',       [PasskeyController::class, 'authenticationOptions']);
-    Route::post('/passkeys/authenticate',   [PasskeyController::class, 'authenticate']);
+        // Passkey login (public — no prior auth required)
+        Route::get('/passkeys/challenge',       [PasskeyController::class, 'authenticationOptions']);
+        Route::post('/passkeys/authenticate',   [PasskeyController::class, 'authenticate']);
+    });
 
     // ── Protected ───────────────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {

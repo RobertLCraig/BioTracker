@@ -193,7 +193,7 @@ class AnalyticsService
             ->where('user_id', $user->id)
             ->whereDate('logged_at', $dateStr)
             ->whereHas('activityType', fn ($q) => $q->where('slug', 'drink'))
-            ->sum(DB::raw('quantity * CASE WHEN unit = "ml" THEN 1 WHEN unit = "l" THEN 1000 ELSE 250 END'));
+            ->sum(DB::raw("quantity * CASE WHEN unit = 'ml' THEN 1 WHEN unit = 'l' THEN 1000 ELSE 250 END"));
 
         // Exercise minutes
         $exerciseMinutes = ActivityLog::withoutGlobalScopes()

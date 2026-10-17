@@ -71,6 +71,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'permission' => 0640, // owner and group only: a log can still carry what a user typed
         ],
 
         'slack' => [

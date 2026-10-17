@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-09-28 (card 0009: an edited result with an order id joins its panel)_
+_Last updated: 2026-10-16 (card 0011: app and Telegram bot live on pmox, branch `card/0010`)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -44,7 +44,8 @@ definition the name reaches, so imports follow manual entries onto one series. R
 stored under the old `test_key` are not rewritten.
 
 ## Architecture / stack
-Laravel 12 on PHP 8.2+ (Herd), SQLite in dev, queue driver `sync` in dev. API-first: every feature
+Laravel 12 on PHP 8.2+ (Herd), SQLite in dev, queue driver `sync` in dev; production is PHP 8.5
+and Postgres 18 on pmox, and the suite passes on both databases. API-first: every feature
 is a versioned REST endpoint under `/api/v1`, behind `auth:sanctum` plus `EnsureTotpVerified`, and
 the Vue 3 SPA (Vue Router, Pinia, Tailwind 4, Chart.js, built by Vite) is one client of that API
 rather than a separate application.
@@ -99,7 +100,34 @@ and work now lives on the board rather than in prose.
   verified end to end against one real captured lipid panel: 1 panel and 6 results created, re-import idempotent,
   out-of-range flags matching the portal, comments encrypting and decrypting, trends returning a
   numeric series, the PDF rendering its lab section.
-- **In progress:** nothing half-built. The tree is clean and the branch is coherent.
+- **Telegram bot (cards 0010 done, 0013 correct/delete in `ai-review/`):** `php artisan telegram:poll`
+  long-polls Telegram (`@BioTrackerHealthAI_bot`); `app/Services/Bot/JournalBot.php` sends each
+  message or photo to the Claude Code CLI (`--tools ""`, `--json-schema`, model `CLAUDE_MODEL`,
+  default `haiku`) and writes the proposed rows itself through the API's own form-request rules.
+  Settings are the `TELEGRAM_*` and `CLAUDE_*` keys in `.env.example`. Personal notes for the bot
+  (diet, medication rules, tone, crisis numbers) live only on the server in
+  `storage/app/private/bot-about.md` (`TELEGRAM_ABOUT_FILE`), because this repo is public.
+  The bot also logs weigh-ins (`vital_logs`, type weight). `telegram:pollen` (scheduled 18:00)
+  messages Rob when tomorrow's Open-Meteo pollen forecast is high. What the bot cannot log becomes a
+  line in `storage/app/private/feature-requests.jsonl` on the server; `bot:pull-requests`, run
+  hourly on the PC by the Windows task "BioTracker bot requests", turns each into a card in
+  `board/human-review/` and commits only that card.
+  Encrypted name columns are `text` since 2026-10-16: varchar(255) broke on Postgres.
+- **Live on pmox since 2026-10-16 (card 0011):** `https://biotracker.home.craig.ooo` (home and
+  Tailscale only), ubuntu-web VM 102, `/opt/biotracker`, Postgres `biotracker` on the shared db LXC,
+  `telegram-bot.service`. Server layout is in SecondBrain `wiki/Home and Tech/PMOX NAS.md`,
+  "102 ubuntu-web". **That is now the real copy; the PC's SQLite is demo data only, and the PC `.env`
+  has no bot token** (two pollers on one token steal each other's messages).
+- **Deploy: `bin/deploy.sh`** from Git Bash on the PC. It ships committed HEAD only, after the suite
+  passes on SQLite and on the server's Postgres (`biotracker_test`), and ends by checking `/up` and
+  the bot. Never deploy by hand.
+- **Coding standard (card 0015):** the project is held to `C:\Dev\About-Me\Coding-Standard.md`.
+  Sign-up is off on the server (`REGISTRATION_OPEN=false`), public auth routes allow 10 requests a
+  minute, and the bot pushes to Rob's phone through ntfy (`NTFY_TOPIC`) after 15 minutes offline.
+  A message that fails mid-way is counted, and Rob is told to resend it. The nightly Postgres dump
+  was restored into a scratch database once on 2026-10-17: 31 tables, every row from before the
+  dump present.
+- **In progress:** card 0011 waits only on Rob's first message to the pmox bot (#1).
 - **Known bugs / broken:** none open. The known shortfalls are scope rather than defects: the demo
   seeder writing no lab data so `/labs` on the demo account only ever shows its empty state. The
   labs list now walks every API page, and card 0007 gave the index an `id` tie-break so tied
@@ -138,7 +166,7 @@ the world before that. Read the card before acting on it.
 # PHP is not on PATH; Herd's is the one the tests were run with
 PHP="/c/Users/r/.config/herd/bin/php84/php.exe"
 
-"$PHP" artisan test                      # expect: 20 passed (102 assertions)
+"$PHP" artisan test                      # expect: 25 passed (120 assertions)
 "$PHP" artisan migrate:fresh --seed      # rebuilds SQLite + seeds the 52 analytes
 "$PHP" artisan route:list --path=lab     # expect: the 5 lab route groups from routes/api.php
 

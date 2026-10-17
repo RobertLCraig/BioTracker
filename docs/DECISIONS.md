@@ -5,6 +5,21 @@ an old entry with a new one that links back to it.
 
 ---
 
+## 2026-10-16: a Telegram bot, Claude through the CLI, hosted on pmox with Postgres
+**Decision:** meals, drinks, symptoms and doses can be logged by texting or photographing them to
+`@BioTrackerHealthAI_bot`. Claude Haiku reads each message through the Claude Code CLI on Rob's
+subscription, with every tool off, and the app writes the rows itself. The app and the bot run on
+pmox (ubuntu-web VM 102) with the database on the shared Postgres.
+**Why:** Telegram over WhatsApp: free, no business account. Claude over a local model: on one meal
+photo, the only vision model that fits the pmox 3070 Ti (qwen3-vl:4b) misnamed one of four foods,
+roughly doubled the protein and took 128 s; Haiku, Sonnet and Opus named every food in 12 to 19 s,
+and Rob judged Haiku the most correct. The CLI means no API key. pmox because the bot must answer
+with the PC off; Postgres because the house rules put app databases on the shared server, which is
+backed up nightly. Card 0010 and card 0011 hold the detail.
+**Status:** active
+
+---
+
 ## 2026-08-29 — the doc set is the four anchors, and work lives on the board
 **Decision:** BioTracker follows the canonical doc layout — `docs/PRD.md`, `docs/HANDOVER.md`,
 `docs/DATA-MODEL.md` and this file at the `docs/` root, with `docs/spec/` and `docs/build/` beneath

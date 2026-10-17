@@ -32,7 +32,13 @@ class ActivityType extends Model
      */
     protected static function bootBelongsToUser(): void
     {
-        static::addGlobalScope(new UserOwnedScope);
+        // Keyed as UserOwnedScope so forUser() and withoutGlobalScope() still remove it.
+        static::addGlobalScope(UserOwnedScope::class, function (Builder $query) {
+            if (auth()->check()) {
+                $query->where(fn (Builder $q) => $q->where('activity_types.is_system', true)
+                    ->orWhere('activity_types.user_id', auth()->id()));
+            }
+        });
         static::creating(function (Model $model) {
             if (auth()->check() && ! $model->user_id && ! $model->is_system) {
                 $model->user_id = auth()->id();

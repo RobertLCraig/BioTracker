@@ -15,6 +15,10 @@ Artisan::command('inspire', function () {
 // Regenerate yesterday's daily summaries for all users at 02:00 every night
 Schedule::job(GenerateDailySummaryJob::class)->dailyAt('02:00');
 
+// Telegram bot: if tomorrow's pollen is high, suggest a hayfever tablet (only when a bot is set up)
+Schedule::command('telegram:pollen')->dailyAt('18:00')->timezone(config('services.telegram.timezone'))
+    ->when(fn () => (bool) config('services.telegram.token'));
+
 // Sync Fitbit data every 4 hours for all connected users
 Schedule::call(function () {
     ConnectedService::withoutGlobalScopes()
