@@ -372,6 +372,19 @@ class JournalBotTest extends TestCase
         $this->assertStringContainsString('Not saved: Their pill', $this->sentText());
     }
 
+    public function test_a_medicine_not_on_the_list_is_added_once_then_reused(): void
+    {
+        $entry = ['kind' => 'medication', 'logged_at' => 'now', 'description' => 'Pill', 'medication_name' => 'Testamol', 'dosage_taken' => '1 tablet'];
+        $this->claudeSays(['reply' => 'Logged.', 'entries' => [$entry]]);
+        $this->message('took a testamol');
+        $this->claudeSays(['reply' => 'Logged.', 'entries' => [['medication_name' => 'TESTAMOL'] + $entry]]);
+        $this->message('took another');
+
+        $this->assertSame(['Testamol'], Medication::withoutGlobalScopes()->get()->pluck('name')->all());
+        $this->assertFalse(Medication::withoutGlobalScopes()->first()->is_active);
+        $this->assertSame(2, MedicationLog::withoutGlobalScopes()->count());
+    }
+
     public function test_a_claude_failure_saves_nothing_and_says_so(): void
     {
         Process::fake(['*' => Process::result('', 'boom', 1)]);

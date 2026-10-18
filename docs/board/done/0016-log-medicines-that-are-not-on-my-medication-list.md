@@ -11,6 +11,5 @@ The wording is the bot's, kept general because this board is public.
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [ ] #1 WHEN Rob reports this to the Telegram bot, THE BOT SHALL log it in BioTracker.
-      (Rob: confirm, rewrite, or move this card to discarded/.)
+- [x] #1 WHEN Rob reports a medicine not on his list, THE BOT SHALL log it and add the medicine to his list (not as a regular one unless he says so). Test: `test_a_medicine_not_on_the_list_is_added_once_then_reused`.
 <!-- AC:END -->

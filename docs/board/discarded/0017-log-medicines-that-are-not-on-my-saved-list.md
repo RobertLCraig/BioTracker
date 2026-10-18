@@ -11,6 +11,5 @@ The wording is the bot's, kept general because this board is public.
 
 ## Acceptance
 <!-- AC:BEGIN -->
-- [ ] #1 WHEN Rob reports this to the Telegram bot, THE BOT SHALL log it in BioTracker.
-      (Rob: confirm, rewrite, or move this card to discarded/.)
+- [ ] #1 Duplicate of 0016, built there.
 <!-- AC:END -->

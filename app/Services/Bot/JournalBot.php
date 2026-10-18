@@ -54,9 +54,11 @@ class JournalBot
         To correct an entry already logged, send it again in full with replaces_id set to its
         [#id] from today's log. To delete one, send its kind, replaces_id and remove: true.
 
-        Kinds: food, drink, exercise, sleep, symptom (severity 1-10), medication (only with a
-        medication_id from the list below), weight (quantity, unit "kg"). logged_at is ISO 8601
-        with offset, in his timezone; use "now" unless he says when.
+        Kinds: food, drink, exercise, sleep, symptom (severity 1-10), medication, weight
+        (quantity, unit "kg"). For medication, use its medication_id from the list below; for a
+        medicine not on the list, leave medication_id out and set medication_name instead, and
+        BioTracker adds it to his list (set regular: true only if he says he takes it regularly).
+        logged_at is ISO 8601 with offset, in his timezone; use "now" unless he says when.
 
         If he reports something no kind fits, do not force it into another kind. Add a
         feature_request instead: a short title for what BioTracker should learn to log, and a why
@@ -89,6 +91,8 @@ class JournalBot
                     'severity' => ['type' => 'integer'],
                     'body_area' => ['type' => 'string'],
                     'medication_id' => ['type' => 'integer'],
+                    'medication_name' => ['type' => 'string'],
+                    'regular' => ['type' => 'boolean'],
                     'dosage_taken' => ['type' => 'string'],
                     'replaces_id' => ['type' => 'integer'],
                     'remove' => ['type' => 'boolean'],
@@ -336,9 +340,9 @@ class JournalBot
             $lines[] = "- [#{$w->id}] {$w->logged_at->copy()->setTimezone($tz)->toDateString()}: {$w->value} {$w->unit}";
         }
 
-        $lines[] = '## Active medications (id: name dosage)';
-        foreach (Medication::where('is_active', true)->get() as $med) {
-            $lines[] = "- {$med->id}: {$med->name} {$med->dosage}{$med->unit}";
+        $lines[] = '## Medications (id: name dosage)';
+        foreach (Medication::all() as $med) {
+            $lines[] = "- {$med->id}: {$med->name} {$med->dosage}{$med->unit}".($med->is_active ? '' : ' (not regular)');
         }
 
         $streak = UserStreak::first();
@@ -444,10 +448,10 @@ class JournalBot
             ], (new StoreSymptomLogRequest)->rules()];
         }
 
-        // The rule's exists: check is not per user; the scoped find() is.
-        if ($kind === 'medication' && Medication::find($e['medication_id'] ?? 0)) {
+        $med = $kind === 'medication' ? $this->medication($e) : null;
+        if ($med) {
             return [MedicationLog::class, [
-                'medication_id' => $e['medication_id'],
+                'medication_id' => $med->id,
                 'taken_at' => $at,
                 'dosage_taken' => $e['dosage_taken'] ?? null,
                 'notes' => $e['description'] ?? null,
@@ -455,6 +459,25 @@ class JournalBot
         }
 
         return [null, [], []];
+    }
+
+    /**
+     * The medication an entry names: by id, else by name, else a new one on Rob's list. The
+     * rule's exists: check is not per user; the scoped find() is. Names are encrypted at rest,
+     * so the name match runs in PHP over his own short list.
+     */
+    private function medication(array $e): ?Medication
+    {
+        if (isset($e['medication_id'])) {
+            return Medication::find($e['medication_id']);
+        }
+        $name = trim($e['medication_name'] ?? '');
+        if ($name === '' || mb_strlen($name) > 255) {
+            return null;
+        }
+
+        return Medication::all()->first(fn ($m) => mb_strtolower($m->name) === mb_strtolower($name))
+            ?? Medication::create(['name' => $name, 'dosage' => $e['dosage_taken'] ?? null, 'is_active' => (bool) ($e['regular'] ?? false)]);
     }
 
     private function downloadPhoto(string $fileId): string
