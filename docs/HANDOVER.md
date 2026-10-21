@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-10-21 (bot writes excretion logs, card 0018 in `ai-review/`, not deployed)_
+_Last updated: 2026-10-21 (bot writes excretion logs, card 0018 in `ai-review/`, deployed)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
