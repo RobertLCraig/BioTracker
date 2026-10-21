@@ -7,9 +7,10 @@ docs/board/
   todo/           ready to pick up, nothing in the way
   in-progress/    an agent is building it right now
   ai-review/      built, awaiting an adversarial review by an agent
-  human-review/   a person owes something: a call to make, a build to accept,
-                  or an outside party to chase
-  done/           reviewed, accepted, delivered. The final product.
+  human-review/   a person owes something: a call to make, a step only they can
+                  take, or an outside party to chase
+  done/           reviewed and delivered. The final product. It may still carry
+                  open `proves: manual` looks: the owner's list of things to try
   discarded/      abandoned or superseded, with one line of why
 ```
 
@@ -115,8 +116,10 @@ deleting a file.** A commit can. A sent email cannot, and a DNS record was servi
 people while it was wrong.
 
 The value is the reason, in the reader's terms: `not_for_the_loop: publishes the site to Hostinger`.
-A card that edits the very script that would be running it carries the key for a different reason,
-and that is fine. The key means "not the unattended loop"; the value says why.
+**The key keeps a card from the BUILDER, never from the reviewer.** A review appends to the card and
+moves it, which deleting a file undoes, so a reviewer takes a card carrying `not_for_the_loop:` like
+any other. **"It edits the script that would be running it" is not a reason.** A build runs in its own
+worktree on its own branch, and a red suite is never merged, so the running loop never sees the edit.
 
 ### A confirmed false positive is recorded, not argued with
 
@@ -145,6 +148,22 @@ queue for a word.
 See `## Plan` is written for a stranger, below. A card nobody knows how to start is a card that does
 not get started.
 
+### Forbidden keys, and two legacy ones
+
+**Forbidden, and checked for: `status`, `created`, `updated`, `author`, `blocked_on`, `priority`.**
+The folder holds the first, git holds the next three, `blocked_on` is what the lane split replaced,
+and `priority` is an enum that rots because nothing forces anyone to revisit it. A copy of any of
+them drifts, and the whole point of the board is that state cannot disagree with itself. Derive
+last-touched from `git log` when rendering, and treat it as an advisory hint rather than state: a
+bulk reformat that touches every card would invert the signal.
+
+**Two more keys exist and must not be stripped**, both fallbacks for cards migrated out of a prose
+handover: `title:` is used when a card has no `# ` heading, and `acceptance:` when it has no
+`AC:BEGIN` sentinels. They are legacy rather than canonical, so do not add them to a new card, but
+deleting them from an old one loses that card's title or its acceptance outright.
+
+**References are IDs, never paths and never titles**, so a `git mv` or a retitle cannot break them.
+
 ## Surface the whole chain of decisions, not the first link
 
 **An option that only raises three more questions has not been costed** (Rob, 2026-08-20). The
@@ -162,7 +181,7 @@ together. If it does not, they are two cards.
 
 ## Links: say what the relationship IS, never a bare card number
 
-**A card number dropped into a sentence is not a link, it is a puzzle.** `firecrm#0053` in the
+**A card number dropped into a sentence is not a link, it is a puzzle.** `planhawk#0053` in the
 middle of a paragraph tells the reader that some other card matters and nothing about why, so they
 open it to find out, and that is a page load spent on something one clause would have said. This is
 the commonest way a card wastes the reader's time while looking complete.
@@ -177,7 +196,7 @@ issue tracker settled on:
 - `0088` - the time-capture phasing has to be ratified before this can be scoped.
 
 **Relates to**
-- `firecrm#0053` - the same scrub rule stopped that repo getting a remote, and the
+- `planhawk#0053` - the same scrub rule stopped that repo getting a remote, and the
   reasoning there applies here unchanged.
 ```
 
@@ -226,8 +245,8 @@ your situation is the exception, because Y" is one line of reading instead of a 
 
 **This test is also what `human-review/` is for**, and the two are one rule stated twice on purpose:
 the four rows above are the whole of what may enter that lane as a decision. See
-`## human-review/ IS A DECISION QUEUE AND NOT AN APPROVAL GATE` below for the other two ways in, both
-narrow, and for what the lane is explicitly NOT.
+`### human-review/ is a decision queue, not an approval gate` below for the other two ways in, both
+narrow, and for what the lane is not.
 
 ## One lane for the human, not three
 
@@ -239,7 +258,7 @@ decide" without a second folder saying it.
 The lane is named after the job, not the person, because these boards are read by more than their
 author and the convention is the same on every project.
 
-### `human-review/` IS A DECISION QUEUE AND NOT AN APPROVAL GATE
+### `human-review/` is a decision queue, not an approval gate
 
 Rob, 2026-08-21, and it is the rule this whole lane turns on:
 
@@ -260,8 +279,8 @@ to protect the attention it would spend.
 1. **A decision that turns on a preference, a cost, a risk, or local knowledge nobody wrote down.**
    That is the same test as `## Is this actually a person's to decide?` below.
 2. **A step only a person can take**, because its effect leaves the repository and no `git revert`
-   reaches it: a scheduled task, a DNS record, a deploy, a message somebody receives, a browser
-   check on a screen.
+   reaches it: a scheduled task, a DNS record, a deploy, a message somebody receives. **A look at
+   something already built is not one of these**: see `A look waits on the product` below.
 3. **An agent that has an answer and good reason to think the person's would differ.** This is the
    narrow one and it is not "the agent is unsure". Write the question, the research behind it, and
    what you would have chosen.
@@ -533,6 +552,21 @@ person at a screen can settle (a browser check, a screenshot, "it looks right"),
 where nothing here can test it, with the reason on the same line. Both are honest and both are
 counted. What is refused is a criterion that is silent about its proof, because that is the one that
 reads as tested and is not.
+
+### A look waits on the product, not in the queue
+
+Rob, 2026-09-30: "I'm interested in reviewing the product. not the card. As much as I do want to see
+a summary of what has been built each hour/day I dont want to review every single card ever done."
+
+**So a built card whose only open criteria say `proves: manual` goes on to `ai-review/` and, when it
+passes, to `done/` with those criteria still open.** Built means at least one box is ticked. The
+reviewers judge everything else and do not count an open look as a finding. ProgressBoard gathers
+every open look on every `done/` card into one list per product, and the owner tries the product
+from that list: tick what passes, or say what failed and move the card back to `todo/` with a
+criterion reopened or added for the fix.
+
+A card with nothing ticked and only manual criteria was never built. It is a task for a person and
+goes to `human-review/` as one.
 
 A project with no suite the loop can find promotes as it always did, and the log says so in those
 words. This rule adds a check where a suite exists; it does not invent one where none does.

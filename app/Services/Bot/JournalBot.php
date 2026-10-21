@@ -4,11 +4,13 @@ namespace App\Services\Bot;
 
 use App\Enums\VitalType;
 use App\Http\Requests\StoreActivityLogRequest;
+use App\Http\Requests\StoreExcretionLogRequest;
 use App\Http\Requests\StoreMedicationLogRequest;
 use App\Http\Requests\StoreSymptomLogRequest;
 use App\Http\Requests\StoreVitalLogRequest;
 use App\Models\ActivityLog;
 use App\Models\ActivityType;
+use App\Models\ExcretionLog;
 use App\Models\Medication;
 use App\Models\MedicationLog;
 use App\Models\SymptomLog;
@@ -55,7 +57,10 @@ class JournalBot
         [#id] from today's log. To delete one, send its kind, replaces_id and remove: true.
 
         Kinds: food, drink, exercise, sleep, symptom (severity 1-10), medication, weight
-        (quantity, unit "kg"). For medication, use its medication_id from the list below; for a
+        (quantity, unit "kg"), excretion (a pee or a poop: excretion_type, plus has_blood,
+        blood_amount, pain_level 0-10 and urgency 1-5 when he says them). A poop needs
+        consistency, its Bristol stool type 1-7: if he has not given it, ask "Which type on the
+        Bristol scale, 1 to 7?" and return no entries until he answers. For medication, use its medication_id from the list below; for a
         medicine not on the list, leave medication_id out and set medication_name instead, and
         BioTracker adds it to his list (set regular: true only if he says he takes it regularly).
         logged_at is ISO 8601 with offset, in his timezone; use "now" unless he says when.
@@ -78,7 +83,7 @@ class JournalBot
                 'type' => 'object',
                 'required' => ['kind', 'logged_at', 'description'],
                 'properties' => [
-                    'kind' => ['type' => 'string', 'enum' => ['food', 'drink', 'exercise', 'sleep', 'symptom', 'medication', 'weight']],
+                    'kind' => ['type' => 'string', 'enum' => ['food', 'drink', 'exercise', 'sleep', 'symptom', 'medication', 'weight', 'excretion']],
                     'logged_at' => ['type' => 'string'],
                     'description' => ['type' => 'string'],
                     'quantity' => ['type' => 'number'],
@@ -94,6 +99,12 @@ class JournalBot
                     'medication_name' => ['type' => 'string'],
                     'regular' => ['type' => 'boolean'],
                     'dosage_taken' => ['type' => 'string'],
+                    'excretion_type' => ['type' => 'string', 'enum' => ['pee', 'poop']],
+                    'consistency' => ['type' => 'integer'],
+                    'has_blood' => ['type' => 'boolean'],
+                    'blood_amount' => ['type' => 'string', 'enum' => ['none', 'trace', 'moderate', 'heavy']],
+                    'pain_level' => ['type' => 'integer'],
+                    'urgency' => ['type' => 'integer'],
                     'replaces_id' => ['type' => 'integer'],
                     'remove' => ['type' => 'boolean'],
                 ],
@@ -335,6 +346,13 @@ class JournalBot
             $lines[] = "- [#{$d->id}] {$local($d->taken_at)} medication {$d->medication_id}: {$d->dosage_taken}";
         }
 
+        foreach (ExcretionLog::where('logged_at', '>=', $from)->orderBy('logged_at')->get() as $x) {
+            $lines[] = "- [#{$x->id}] {$local($x->logged_at)} excretion: {$x->type->value}"
+                .($x->consistency ? ", Bristol {$x->consistency->value}" : '')
+                .($x->has_blood ? ", blood {$x->blood_amount->value}" : ', no blood')
+                .($x->pain_level !== null ? ", pain {$x->pain_level}/10" : '');
+        }
+
         $lines[] = '## Recent weigh-ins (newest first)';
         foreach (VitalLog::where('type', VitalType::Weight->value)->latest('logged_at')->take(5)->get() as $w) {
             $lines[] = "- [#{$w->id}] {$w->logged_at->copy()->setTimezone($tz)->toDateString()}: {$w->value} {$w->unit}";
@@ -368,7 +386,7 @@ class JournalBot
         foreach ($entries as $e) {
             // A correction or removal names an existing row; the user scope keeps it to Rob's own.
             $table = in_array($e['kind'] ?? null, self::ACTIVITY_KINDS, true) ? ActivityLog::class
-                : ['symptom' => SymptomLog::class, 'medication' => MedicationLog::class, 'weight' => VitalLog::class][$e['kind'] ?? ''] ?? null;
+                : ['symptom' => SymptomLog::class, 'medication' => MedicationLog::class, 'weight' => VitalLog::class, 'excretion' => ExcretionLog::class][$e['kind'] ?? ''] ?? null;
             $existing = isset($e['replaces_id']) && $table ? $table::find($e['replaces_id']) : null;
             if (isset($e['replaces_id']) && ! $existing) {
                 $failed[] = ($e['description'] ?? '?').' (entry to change not found)';
@@ -436,6 +454,23 @@ class JournalBot
                 'source' => 'manual',
                 'notes' => $e['description'] ?? null,
             ], (new StoreVitalLogRequest)->rules()];
+        }
+
+        if ($kind === 'excretion') {
+            return [ExcretionLog::class, [
+                'type' => $e['excretion_type'] ?? null,
+                'consistency' => $e['consistency'] ?? null,
+                'has_blood' => $e['has_blood'] ?? false,
+                'blood_amount' => $e['blood_amount'] ?? 'none',
+                'pain_level' => $e['pain_level'] ?? null,
+                'urgency' => $e['urgency'] ?? null,
+                'logged_at' => $at,
+                'notes' => $e['description'] ?? null,
+            ], [
+                // The request's own requiredIf reads the HTTP input, which is empty here.
+                ...(new StoreExcretionLogRequest)->rules(),
+                'consistency' => 'nullable|integer|min:1|max:7|required_if:type,poop',
+            ]];
         }
 
         if ($kind === 'symptom') {

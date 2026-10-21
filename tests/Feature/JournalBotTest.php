@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ActivityLog;
 use App\Models\ActivityType;
+use App\Models\ExcretionLog;
 use App\Models\Medication;
 use App\Models\MedicationLog;
 use App\Models\SymptomLog;
@@ -112,6 +113,28 @@ class JournalBotTest extends TestCase
         $this->claudeSays(['reply' => 'Down 1.2 kg.', 'entries' => []]);
         $this->message('how is my weight going?');
         Process::assertRan(fn ($p) => str_contains($p->input, ': 95.2')); // value in the weigh-ins list
+    }
+
+    public function test_a_poop_goes_to_the_excretion_log_and_needs_its_bristol_type(): void
+    {
+        $this->claudeSays(['reply' => 'Logged.', 'entries' => [[
+            'kind' => 'excretion', 'logged_at' => 'now', 'description' => 'Sore, quick',
+            'excretion_type' => 'poop', 'consistency' => 4, 'has_blood' => false, 'pain_level' => 5,
+        ]]]);
+        $this->message('poo, type 4, a bit sore');
+
+        $x = ExcretionLog::withoutGlobalScopes()->sole();
+        $this->assertSame([$this->rob->id, 'poop', 4, false, 5], [$x->user_id, $x->type->value, $x->consistency->value, $x->has_blood, $x->pain_level]);
+        Process::assertRan(fn ($p) => str_contains(implode(' ', $p->command), 'Bristol scale, 1 to 7'));
+
+        $this->claudeSays(['reply' => 'Logged.', 'entries' => [[
+            'kind' => 'excretion', 'logged_at' => 'now', 'description' => 'Another one', 'excretion_type' => 'poop',
+        ]]]);
+        $this->message('another one');
+
+        $this->assertSame(1, ExcretionLog::withoutGlobalScopes()->count(), 'a poop with no Bristol type is not saved');
+        $this->assertStringContainsString('Not saved: Another one', $this->sentText());
+        Process::assertRan(fn ($p) => str_contains($p->input, 'excretion: poop, Bristol 4, no blood, pain 5'));
     }
 
     private function pollenForecast(int $grassTomorrow): void

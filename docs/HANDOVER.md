@@ -8,7 +8,7 @@
 **Status:** Phase 6 built, tested and green, but verified against one captured lipid panel only.
 Its API and its SPA view are both on `master` now. The view has still never been opened in a
 browser.
-_Last updated: 2026-10-16 (card 0011: app and Telegram bot live on pmox, branch `card/0010`)_
+_Last updated: 2026-10-21 (bot writes excretion logs, card 0018 in `ai-review/`, not deployed)_
 
 ## Goal & success criteria
 The goal, the success criteria and the non-goals are in [PRD.md](PRD.md).
@@ -100,7 +100,7 @@ and work now lives on the board rather than in prose.
   verified end to end against one real captured lipid panel: 1 panel and 6 results created, re-import idempotent,
   out-of-range flags matching the portal, comments encrypting and decrypting, trends returning a
   numeric series, the PDF rendering its lab section.
-- **Telegram bot (cards 0010 done, 0013 correct/delete in `ai-review/`):** `php artisan telegram:poll`
+- **Telegram bot:** `php artisan telegram:poll`
   long-polls Telegram (`@BioTrackerHealthAI_bot`); `app/Services/Bot/JournalBot.php` sends each
   message or photo to the Claude Code CLI (`--tools ""`, `--json-schema`, model `CLAUDE_MODEL`,
   default `haiku`) and writes the proposed rows itself through the API's own form-request rules.
